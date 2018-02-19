@@ -1,19 +1,19 @@
-/*
-Hello there fellow hooman Bean.
-This is a complete remake of my weapon_buu_copypaste_base
-I have tried to keep everything as neat as possible for readibility
-Sadly, my old sweps broke as a result, so those need to be fixed
-- If you came here to learn, go for it, but it might not be perfect
-- If you came here to steal, Please give me credit, no one will judge you for using part of someone's code :(
-- If you came here to borrow code for your weapon of mass destruction, feel free to do so but please leave Portugal intact, I like it here
-- If you came here for any other reason, sorry I ignored you :((
-Have fun! And bring some tissues because this stuff might be ugly
-*/
+/*-------------------------------------------------------------------------------------------------------------------------------------
+--Hello there fellow hooman Bean.
+--This is a complete remake of my weapon_buu_copypaste_base
+--I have tried to keep everything as neat as possible for readibility
+--Sadly, my old sweps broke as a result, so those need to be fixed
+--- If you came here to learn, go for it, but it might not be perfect
+--- If you came here to steal, Please give me credit, no one will judge you for using part of someone's code :(
+--- If you came here to borrow code for your weapon of mass destruction, feel free to do so but please leave Portugal intact, I like it here
+--- If you came here for any other reason, sorry I ignored you :((
+--Have fun! And bring some tissues because this stuff might be ugly
+-------------------------------------------------------------------------------------------------------------------------------------*/
 
 if ( CLIENT ) then
 	SWEP.DrawAmmo = true
 	SWEP.DrawCrosshair = true
-	SWEP.ViewModelFOV = 70
+	SWEP.ViewModelFOV = 45
 	SWEP.ViewModelFlip = false
 	SWEP.CSMuzzleFlashes = true
 end
@@ -32,7 +32,8 @@ SWEP.AdminOnly = false
 SWEP.UseHands = true
 SWEP.HoldType = "pistol"
 
-SWEP.ViewModel = "models/weapons/monstermash/c_colt.mdl" 
+//SWEP.ViewModel = "models/weapons/monstermash/c_colt.mdl" 
+SWEP.ViewModel = "models/weapons/c_mp5.mdl"
 SWEP.WorldModel = "models/weapons/FC3W/FC3stgw.mdl"
 
 SWEP.Primary.Sound 		= Sound("FC3/weapons/stg/stg-1.wav")
@@ -54,21 +55,20 @@ SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic = false 
 SWEP.Secondary.Ammo = "none"
 
+SWEP.BobScale = 0 -- Real men code their own bob
+SWEP.SwayScale = 0 -- I'm too lazy to code my own sway, plus this one works just fine soooooo....
+
 -- Custom settings start here --
 
-SWEP.BobScale = 0 -- Real men code their own bob
-SWEP.SwayScale = 0.2 -- I'm too lazy to code my own sway, plus this one works just fine soooooo....
+SWEP.BuuSwayScale = 60
 
-SWEP.IronSightsPos = Vector (5.1434, -1.75, 2.673) -- Ironsights
-SWEP.IronSightsAng = Vector (0.2494, -0.0121, 0) 
+SWEP.IronSightsPos = Vector(-4.825, -9.233, 2.049)
+SWEP.IronSightsAng = Vector(0.14, -3.32, -3.004)
+
+SWEP.RunArmOffset = Vector(8.595, -13.676, -4.376)
+SWEP.RunArmAngle = Vector(-0.617, 70, -15.205)
 
 SWEP.CrouchPos = Vector(-1,-1,.5) -- Moves the gun when you crouch
-
-SWEP.RunArmOffset = Vector(-2.723, -12.035, -7.660) -- Sprinting pos of the gun
-SWEP.RunArmAngle = Vector (70, 0, 0)
-
-SWEP.CrouchMovePos = Vector (0, 0, 0) -- Movement when crouching
-SWEP.CrouchMoveAng = Vector (0, 0, 0)
 
 SWEP.IronsightFOV = 65 -- FOV when in ironsights
 SWEP.IronsightMoveIntensity = 0.5 -- Ironsight sway
@@ -297,18 +297,18 @@ end
 function SWEP:SecondaryAttack() 
 end
 
+
 -- Where the real magic happens
 function SWEP:Think() 
-
     local Tr = self.Owner:GetEyeTrace()
     if (Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 ) then -- Near a wall?
         
         -- This needs revision because it doesn't work. I'll fix it sometime
-        //if self.Weapon:Clip1() <= 0 && self.UseLastIdle then 
-        //self.Weapon:SendWeaponAnim( ACT_VM_IDLE_EMPTY )
-        //else
-        //self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
-        //end
+        --if self.Weapon:Clip1() <= 0 && self.UseLastIdle then 
+        --self.Weapon:SendWeaponAnim( ACT_VM_IDLE_EMPTY )
+        --else
+        --self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
+        --end
 
     end
     
@@ -415,7 +415,7 @@ end
 
 -- Dropping Mags
 function SWEP:MagazineDrop()
-    if self:GetBuu_MagDropTime() < CurTime() && !(self:GetBuu_MagDropTime() == 0) then
+    if self:GetBuu_MagDropTime() < CurTime() && !(self:GetBuu_MagDropTime() == 0) && self.DropMag then
         self:SetBuu_MagDropTime(0)
         local shotpos = self.Owner:GetShootPos()
         shotpos = shotpos + self.Owner:GetForward()*-15
@@ -571,9 +571,9 @@ function SWEP:ViewModelDrawn()
         local vm = self.Owner:GetViewModel()
         local ang = vm:GetAngles()
         local att = vm:LookupAttachment("1")
-        local Angel = self.Owner:GetViewModel():GetAttachment(1).Ang
+        local Angle = self.Owner:GetViewModel():GetAttachment(1).Ang
         local Vec1 = self.Owner:GetViewModel():GetAttachment(1).Pos
-        local Vec2 = self.Owner:GetViewModel():GetAttachment(1).Pos + Angel:Forward()*100
+        local Vec2 = self.Owner:GetViewModel():GetAttachment(1).Pos + Angle:Forward()*100
         render.SetMaterial(LASER)
         render.DrawBeam(Vec1, Vec2, 2, 0, 1, Color(255,0,0))
     end
@@ -592,6 +592,10 @@ if CLIENT then
 	local TestVectorAngleTarget = Vector(0,0,0)
 	local CrouchAng=0
 	local CrouchAng2=0
+	local Current_Aim = Angle(0,0,0)
+	local Off, Off2, Off3, dist = 0, 0, 0, 0
+	SWEP.LastEyeSpeed = Angle(0,0,0)
+	SWEP.EyeSpeed = Angle(0,0,0)
 	function SWEP:GetViewModelPosition(pos, ang)
 		if !IsValid(self.Owner) then return end
 		local ply = LocalPlayer()
@@ -603,11 +607,11 @@ if CLIENT then
             TestVectorAngle = LerpVector(10*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
         elseif self.Owner:KeyDown(IN_DUCK) && walkspeed > 40 then 
 			if self:GetBuu_Ironsights() == false then
-			TestVector = LerpVector(4*FrameTime(),TestVector,TestVectorTarget) 
-            TestVectorAngle = LerpVector(4*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
+				TestVector = LerpVector(4*FrameTime(),TestVector,TestVectorTarget) 
+				TestVectorAngle = LerpVector(4*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
 			else
-			TestVector = LerpVector(10*FrameTime(),TestVector,TestVectorTarget) 
-            TestVectorAngle = LerpVector(10*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
+				TestVector = LerpVector(10*FrameTime(),TestVector,TestVectorTarget) 
+				TestVectorAngle = LerpVector(10*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
 			end
 		else
             TestVector = LerpVector(5*FrameTime(),TestVector,TestVectorTarget) 
@@ -637,63 +641,55 @@ if CLIENT then
         elseif Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true) then 
             TestVectorTarget = self.RunArmOffset
             TestVectorAngleTarget = self.RunArmAngle
-        elseif self.Owner:KeyDown(IN_DUCK) && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then 
-			if walkspeed > 40 then
-			TestVectorTarget = self.CrouchMovePos
-            TestVectorAngleTarget = self.CrouchMoveAng
-			else
+        elseif self.Owner:Crouching() && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then 
             TestVectorTarget = self.CrouchPos
             TestVectorAngleTarget = Vector(0,0,0)
-			end
         else
             TestVectorTarget = Vector(0,0,0)
             TestVectorAngleTarget = Vector(0,0,0)
         end
         
 		
-		local BreatTime = RealTime() * walkspeed/200
-		local MoveForce = CalcMoveForce(LocalPlayer())
-		TestVectorTarget = TestVectorTarget + Vector(0 ,0 , 0- math.Clamp(self.Owner:GetVelocity().z / 300,-1,1))
-        
-        -- This I don't like however. I REALLY need to redo this part
-        -- Be wary of tears
-		if (self.Owner:KeyDown(IN_DUCK) && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT))) then
-			mynum1 = 5
-			mynum2 =  2
-        elseif !self.Owner:KeyDown(IN_WALK) && !self:GetBuu_Sprinting() == true && !self.Owner:KeyDown(IN_DUCK) && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) then
-			mynum1 = 15
-			mynum2 =  3
-		elseif (self.Owner:KeyDown(IN_WALK)|| self.Owner:KeyDown(IN_DUCK))&& !self:GetBuu_Sprinting() == true && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) then
-			mynum1 = 10
-			mynum2 =  20
-		elseif self:GetBuu_Sprinting() == true && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) then
-			mynum1 = 20
-			mynum2 =  0.6
-		elseif self:GetBuu_Ironsights() == false && walkspeed < 1 && !self.Owner:KeyDown(IN_DUCK) then
-			mynum1 = 1
-			mynum2 =  10
-        else
-            mynum1 = 0
-			mynum2 =  100000
-		end
-
+		/*--------------------------------------------
+		--				  Jump Sway					--
+		--------------------------------------------*/
 		
-		local BreatTime = RealTime() * mynum1
-		local MoveForce = CalcMoveForce(ply)
-			
-		TestVectorAngleTarget = TestVectorAngleTarget - Vector(math.cos(BreatTime) / mynum2, (math.cos(BreatTime / 2) / mynum2),0)
+		TestVectorTarget = TestVectorTarget + Vector(0 ,0 , -math.Clamp(self.Owner:GetVelocity().z / 300,-1,1))
+		
+		
+		/*--------------------------------------------
+		--			  Viewmodel Bobbing				--
+		--------------------------------------------*/
         
-		if self.Owner:KeyDown(IN_DUCK) then
-			if CrouchAng < 1 then
-				CrouchAng = CrouchAng + 0.01
-				CrouchAng2 = CrouchAng2 - 0.01
+		/*if ply:IsOnGround() && self:GetBuu_Sprinting() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true)	 then
+
+		else*/if ply:IsOnGround() && walkspeed > 20 && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then
+			local BreatheTime = RealTime() * 16
+			if self:GetBuu_Ironsights() then
+				TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
+			else
+				TestVectorTarget = TestVectorTarget - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200,0,0)
+				TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200,0)
 			end
-		else
-			if CrouchAng > 0 then
-				CrouchAng = CrouchAng - 0.01
-				CrouchAng2 = CrouchAng2 + 0.01
-			end
-		end
+			
+        end
+		
+		/*--------------------------------------------
+		--				Viewmodel Sway				--
+		--------------------------------------------*/
+		
+		self.LastEyeSpeed = self.EyeSpeed
+		
+		Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
+		
+		self.EyeSpeed = Current_Aim - ply:EyeAngles()
+		self.EyeSpeed.y = math.AngleDifference( Current_Aim.y, ply:EyeAngles().y ) -- Thank you MushroomGuy for telling me this function even existed
+		
+		ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyeSpeed.p/self.BuuSwayScale,-4,4))
+		ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyeSpeed.y/self.BuuSwayScale,-4,4))
+
+		pos = pos + math.Clamp((-1.5*self.EyeSpeed.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
+		pos = pos + math.Clamp((-1.5*self.EyeSpeed.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
 		return pos, ang
 	end
 end
@@ -717,22 +713,21 @@ function CalcMoveForce(ply)
 end
 
 function IronIdleMove(cmd)
-        local ply = LocalPlayer()
-        local weapon = ply:GetActiveWeapon()
-        if !IsValid(ply) then return end
-        if weapon.Base == "weapon_buu_base2" && weapon:GetBuu_Ironsights() then
-                local ang = cmd:GetViewAngles()
- 
-                local ft = FrameTime()
-                local BreatTime = RealTime() * weapon.IronsightMoveIntensity
-                local MoveForce = CalcMoveForce(ply)
-                       
-                ang.pitch = ang.pitch + math.cos(BreatTime) / MoveForce
-                ang.yaw = ang.yaw + math.cos(BreatTime /2
-                ) / MoveForce
-                if !IsValid(weapon) then return end
-                cmd:SetViewAngles(ang) 
-        end
+	local ply = LocalPlayer()
+	local weapon = ply:GetActiveWeapon()
+	if !IsValid(ply) then return end
+	if weapon.Base == "weapon_buu_base2" && weapon:GetBuu_Ironsights() then
+		local ang = cmd:GetViewAngles()
+
+		local ft = FrameTime()
+		local BreatheTime = RealTime() * weapon.IronsightMoveIntensity
+		local MoveForce = CalcMoveForce(ply)
+			   
+		ang.pitch = ang.pitch + math.cos(BreatheTime) / MoveForce
+		ang.yaw = ang.yaw + math.cos(BreatheTime/2) / MoveForce
+		if !IsValid(weapon) then return end
+		cmd:SetViewAngles(ang) 
+	end
 end
 hook.Add ("CreateMove", "BuuIronIdleMove", IronIdleMove)
 
