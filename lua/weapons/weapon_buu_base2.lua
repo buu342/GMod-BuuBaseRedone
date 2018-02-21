@@ -1,13 +1,19 @@
 /*-------------------------------------------------------------------------------------------------------------------------------------
---Hello there fellow hooman Bean.
---This is a complete remake of my weapon_buu_copypaste_base
---I have tried to keep everything as neat as possible for readibility
---Sadly, my old sweps broke as a result, so those need to be fixed
---- If you came here to learn, go for it, but it might not be perfect
---- If you came here to steal, Please give me credit, no one will judge you for using part of someone's code :(
---- If you came here to borrow code for your weapon of mass destruction, feel free to do so but please leave Portugal intact, I like it here
---- If you came here for any other reason, sorry I ignored you :((
---Have fun! And bring some tissues because this stuff might be ugly
+Hello there fellow hooman Bean.
+This is a complete remake of my weapon_buu_copypaste_base
+I have tried to keep everything as neat as possible for readibility
+Sadly, my old sweps broke as a result, so those need to be fixed
+- If you came here to learn, go for it, but it might not be perfect
+- If you came here to steal, Please give me credit, no one will judge you for using part of someone's code :(
+- If you came here to borrow code for your weapon of mass destruction, feel free to do so but please leave Portugal intact, I like it here
+- If you came here for any other reason, sorry I ignored you :((
+Have fun! And bring some tissues because this stuff might be ugly
+
+Todo:
+	- Stop spam jump animation
+	- Ask about networking the jump animation
+	- Make sprint animation
+	
 -------------------------------------------------------------------------------------------------------------------------------------*/
 
 if ( CLIENT ) then
@@ -115,6 +121,8 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Float",6,"Buu_ViewPunch2")
     self:NetworkVar("Float",7,"Buu_MagDropTime") -- Predicted timer for dropping a mag model
     self:NetworkVar("Float",8,"Buu_TimeToScope") -- Predicted timer for going to the scope on a sniper rifle
+	self:NetworkVar("Float",9,"Buu_JumpTime")
+	self:NetworkVar("Float",10,"Buu_LandTime")
     self:NetworkVar("Bool",0,"Buu_Reloading") -- Are we reloading?
     self:NetworkVar("Bool",1,"Buu_CanCancelReloading") -- Can we stop the shotgun's reload?
     self:NetworkVar("Bool",2,"Buu_Ironsights") -- Are we in ironsights?
@@ -407,6 +415,25 @@ function SWEP:Think()
         self:DoMyReload() -- Predicted shotgun reload function
     end
     self:MagazineDrop() -- Predicted mag drop function
+	
+	if (self.Owner:IsOnGround() || self:GetBuu_JumpTime() < CurTime()) && self:GetBuu_JumpTime() != 0 then
+		self:SetBuu_JumpTime(0)
+	end
+
+	if !self.Owner:IsOnGround() then
+		self:SetBuu_LandTime(CurTime() + 0.31)
+	end
+
+	if self.Owner:GetMoveType() == MOVETYPE_NOCLIP || (self:GetBuu_LandTime() < CurTime() && self:GetBuu_LandTime() != 0) then
+		self:SetBuu_LandTime(0)
+	end
+
+	if self.Owner:KeyDownLast( IN_JUMP ) then
+		if self:GetBuu_JumpTime() == 0 then	
+			self:SetBuu_JumpTime(CurTime() + 0.31)
+			self:SetBuu_LandTime(0)
+		end
+	end
 end
 
 -- Real men code their own SWEP:Reload() (Mine's in think)
@@ -455,7 +482,6 @@ function MySuperSexyCalcView(ply,origin,angles,fov,vm_origin,vm_angles)
 		e_recoilyaw = Lerp(6*FrameTime(),e_recoilyaw,myrecoilyaw)
 		
 		m_PlayerCam.angles = Angle(angles.p-myrecoil,angles.y-e_recoilyaw ,angles.r)
-		
 		return m_PlayerCam,GAMEMODE:CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
 	end
 end
@@ -601,8 +627,10 @@ if CLIENT then
 		local ply = LocalPlayer()
 		local weapon = ply:GetActiveWeapon()
 		local walkspeed = self.Owner:GetVelocity():Length() 
-		
-        if IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then
+		if (self:GetBuu_JumpTime() != 0 && self.Owner:GetVelocity().z > 0) || self:GetBuu_LandTime() > CurTime() then
+			TestVector = LerpVector(20*FrameTime(),TestVector,TestVectorTarget) 
+            TestVectorAngle = LerpVector(20*FrameTime(),TestVectorAngle,TestVectorAngleTarget)
+        elseif IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then
             TestVector = LerpVector(10*FrameTime(),TestVector,TestVectorTarget) 
             TestVectorAngle = LerpVector(10*FrameTime(),TestVectorAngle,TestVectorAngleTarget) 
         elseif self.Owner:KeyDown(IN_DUCK) && walkspeed > 40 then 
@@ -651,31 +679,75 @@ if CLIENT then
         
 		
 		/*--------------------------------------------
-		--				  Jump Sway					--
+					 Viewmodel Jump Sway
 		--------------------------------------------*/
 		
-		TestVectorTarget = TestVectorTarget + Vector(0 ,0 , -math.Clamp(self.Owner:GetVelocity().z / 300,-1,1))
-		
-		
-		/*--------------------------------------------
-		--			  Viewmodel Bobbing				--
-		--------------------------------------------*/
-        
-		/*if ply:IsOnGround() && self:GetBuu_Sprinting() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true)	 then
+		-- Use this if you gotta https://www.desmos.com/calculator/cahqdxeshd
+		local function BezierY(f,a,b,c)
+			f = f*3.2258
+			return (1-f)^2 *a + 2*(1-f)*f*b + f*f*c
+		end
+		if !self:GetBuu_Ironsights() then
+			if self:GetBuu_JumpTime() != 0 then
+				local f = 0.31 - (self:GetBuu_JumpTime()-CurTime())
 
-		else*/if ply:IsOnGround() && walkspeed > 20 && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then
-			local BreatheTime = RealTime() * 16
-			if self:GetBuu_Ironsights() then
-				TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
-			else
-				TestVectorTarget = TestVectorTarget - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200,0,0)
-				TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200,0)
+				local xx = BezierY(f,0,-4,0)
+				local yy = 0
+				local zz = BezierY(f,0,-2,-5)
+				
+				local pt = BezierY(f,0,-4.36,10)
+				local yw = xx
+				local rl = BezierY(f,0,-10.82,-5)
+				
+				TestVectorTarget = TestVectorTarget + Vector(xx, yy, zz)
+				TestVectorAngleTarget = TestVectorAngleTarget + Vector(pt, yw, rl)
+			elseif !ply:IsOnGround() && ply:GetMoveType() != MOVETYPE_NOCLIP then
+				local BreatheTime = RealTime() * 30
+				TestVectorTarget = TestVectorTarget + Vector(math.cos(BreatheTime/2)/16, 0, -5+(math.sin(BreatheTime/3)/16))
+				TestVectorAngleTarget = TestVectorAngleTarget + Vector(10-(math.sin(BreatheTime/3)/4), math.cos(BreatheTime/2)/4, -5)
+			elseif self:GetBuu_LandTime() > CurTime() then
+				local f = (self:GetBuu_LandTime()-CurTime())
+				
+				local xx = BezierY(f,0,-4,0)
+				local yy = 0
+				local zz = BezierY(f,0,-2,-5)
+				
+				local pt = BezierY(f,0,-4.36,10)
+				local yw = xx
+				local rl = BezierY(f,0,-10.82,-5)
+				
+				TestVectorTarget = TestVectorTarget + Vector(xx, yy, zz)
+				TestVectorAngleTarget = TestVectorAngleTarget + Vector(pt, yw, rl)
 			end
-			
-        end
+		else
+			TestVectorTarget = TestVectorTarget + Vector(0 ,0 , math.Clamp(self.Owner:GetVelocity().z / 1000,-1,1))
+		end
 		
 		/*--------------------------------------------
-		--				Viewmodel Sway				--
+					  Viewmodel Bobbing
+		--------------------------------------------*/
+		
+        if ply:IsOnGround() then
+			if self:GetBuu_Sprinting() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true)	 then
+				-- Fix
+			elseif walkspeed > 20 && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then
+				local BreatheTime = RealTime() * 16
+				if self:GetBuu_Ironsights() then
+					TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
+				else
+					TestVectorTarget = TestVectorTarget - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200,0,0)
+					TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200,0)
+				end
+			elseif !self:GetBuu_Ironsights() then
+				local BreatheTime = RealTime() * 2
+				TestVectorTarget = TestVectorTarget - Vector(math.cos(BreatheTime/4)/4,0,-math.cos(BreatheTime/5)/4)
+				TestVectorAngleTarget = TestVectorAngleTarget - Vector(math.cos(BreatheTime/5),math.cos(BreatheTime/4),math.cos(BreatheTime/7))
+			end
+		end
+		
+		
+		/*--------------------------------------------
+						Viewmodel Sway
 		--------------------------------------------*/
 		
 		self.LastEyeSpeed = self.EyeSpeed
@@ -693,6 +765,7 @@ if CLIENT then
 		return pos, ang
 	end
 end
+
 
 -- Now comes Ironsight swaying. 
 function CalcMoveForce(ply)
@@ -716,15 +789,17 @@ function IronIdleMove(cmd)
 	local ply = LocalPlayer()
 	local weapon = ply:GetActiveWeapon()
 	if !IsValid(ply) then return end
-	if weapon.Base == "weapon_buu_base2" && weapon:GetBuu_Ironsights() then
+	if IsValid(weapon) && (weapon:GetClass() == "weapon_buu_base2" || weapon.Base == "weapon_buu_base2") then
 		local ang = cmd:GetViewAngles()
-
-		local ft = FrameTime()
-		local BreatheTime = RealTime() * weapon.IronsightMoveIntensity
-		local MoveForce = CalcMoveForce(ply)
-			   
-		ang.pitch = ang.pitch + math.cos(BreatheTime) / MoveForce
-		ang.yaw = ang.yaw + math.cos(BreatheTime/2) / MoveForce
+		if weapon:GetBuu_Ironsights() then
+			local ft = FrameTime()
+			local BreatheTime = RealTime() * weapon.IronsightMoveIntensity
+			local MoveForce = CalcMoveForce(ply)
+				   
+			ang.pitch = ang.pitch + math.cos(BreatheTime) / MoveForce
+			ang.yaw = ang.yaw + math.cos(BreatheTime/2) / MoveForce
+			
+		end
 		if !IsValid(weapon) then return end
 		cmd:SetViewAngles(ang) 
 	end
