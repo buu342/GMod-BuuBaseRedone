@@ -10,9 +10,12 @@ Sadly, my old sweps broke as a result, so those need to be fixed
 Have fun! And bring some tissues because this stuff might be ugly
 
 Todo:
-	- Stop spam jump animation
-	- Ask about networking the jump animation
-	- Make sprint animation
+	- Fix viewmodel sway
+	- Pistol different sprint
+	- Low Ammo Sound
+	- View Movement
+	- Fix Laser
+	- Smoke Trail
 	
 -------------------------------------------------------------------------------------------------------------------------------------*/
 
@@ -38,23 +41,22 @@ SWEP.AdminOnly = false
 SWEP.UseHands = true
 SWEP.HoldType = "pistol"
 
-//SWEP.ViewModel = "models/weapons/monstermash/c_colt.mdl" 
-SWEP.ViewModel = "models/weapons/c_mp5.mdl"
-SWEP.WorldModel = "models/weapons/FC3W/FC3stgw.mdl"
+SWEP.ViewModel = "models/weapons/c_smg1.mdl"
+SWEP.WorldModel = "models/weapons/w_smg1.mdl"
 
-SWEP.Primary.Sound 		= Sound("FC3/weapons/stg/stg-1.wav")
+SWEP.Primary.Sound = Sound("weapons/smg1/smg1_fire1.wav")
 SWEP.Primary.SoundSilenced = Sound("")
-SWEP.Primary.Recoil = 1.2
-SWEP.Primary.Damage = 40
+SWEP.Primary.Recoil = 0.2
+SWEP.Primary.Damage = 4
 SWEP.Primary.NumShots = 1
-SWEP.Primary.Cone = 0.001
+SWEP.Primary.Cone = 0.02
 SWEP.Primary.Delay = 0.05
 SWEP.Primary.TakeAmmo = 1
 
-SWEP.Primary.ClipSize = 100
+SWEP.Primary.ClipSize = 45
 SWEP.Primary.DefaultClip = 500
 SWEP.Primary.Automatic = true
-SWEP.Primary.Ammo = "pistol"
+SWEP.Primary.Ammo = "smg1"
 
 SWEP.Secondary.ClipSize = -1
 SWEP.Secondary.DefaultClip = -1
@@ -62,38 +64,17 @@ SWEP.Secondary.Automatic = false
 SWEP.Secondary.Ammo = "none"
 
 SWEP.BobScale = 0 -- Real men code their own bob
-SWEP.SwayScale = 0 -- I'm too lazy to code my own sway, plus this one works just fine soooooo....
+SWEP.SwayScale = 0 -- and their own sway
 
--- Custom settings start here --
-
-SWEP.BuuSwayScale = 60
-
-SWEP.IronSightsPos = Vector(-4.825, -9.233, 2.049)
-SWEP.IronSightsAng = Vector(0.14, -3.32, -3.004)
-
-SWEP.RunArmOffset = Vector(8.595, -13.676, -4.376)
-SWEP.RunArmAngle = Vector(-0.617, 70, -15.205)
-
-SWEP.CrouchPos = Vector(-1,-1,.5) -- Moves the gun when you crouch
-
-SWEP.IronsightFOV = 65 -- FOV when in ironsights
-SWEP.IronsightMoveIntensity = 0.5 -- Ironsight sway
-
-SWEP.IronSightsShootPos = SWEP.IronSightsPos -- This is for weapons to have custom shoot animations in ironsights. Just give it a vector with the weapon pushed back a bit
-SWEP.IronSightsShootAng = SWEP.IronSightsAng -- Same but vectors
-
-SWEP.ReloadAmmoTime = 0.7 -- When does the ammo appear in the mag?
-SWEP.ReloadAmmoTimeLast = 0.7 -- When does the ammo appear in the mag when you using act_vm_reload_empty
-
-SWEP.UseLastShoot = false -- Do you have a act_vm_primaryattack_empty?
-SWEP.UseLastReload = false -- Do you have a act_vm_reload_empty?
-SWEP.UseLastIdle = false -- Do you have a act_vm_idle_empty?
-SWEP.UseLastDraw = false-- Do you have a act_vm_draw_empty? 
-
-SWEP.UseNormalShootIron = true -- Use act_vm_primaryattack in ironsights?
+/*==================================================================
+					Custom settings start here
+==================================================================*/
 
 SWEP.Laser = false -- Don't touch, it's broken
 SWEP.Silenced = false -- Gives you silenced muzzle flash and uses SWEP.Primary.SoundSilenced
+
+
+/*======================= Shotgun Settings =======================*/
 
 SWEP.Shotgun = false -- Shotgun reload?
 SWEP.ShotgunSwitchMode = false -- Allow swap between auto and pump mode?
@@ -101,14 +82,69 @@ SWEP.ShotgunMode2Delay = 0.95 -- If using a different shotgun shoot animation, w
 SWEP.ShotgunMode = 0 -- Pump (0) or Auto (1)
 SWEP.DestroyDoor = false -- Does a shotgun break down doors?
 
+
+/*======================== Scope Settings ========================*/
+
 SWEP.Sniper         = false -- Sniper rifle scope?
 SWEP.SniperZoom 	= 30 -- Zoom on sniper rifle
 SWEP.ScopeScale 	= 0.5 -- Don't change
 SWEP.SniperTexture  = "scope/fc3Scope" -- scope texture
 
+
+/*======================== Reload Timers ========================*/
+
+SWEP.ReloadAmmoTime = 0.7 -- When does the ammo appear in the mag?
+SWEP.ReloadAmmoTimeLast = 0.7 -- When does the ammo appear in the mag when you using act_vm_reload_empty
+
+
+/*========================= Mag Dropping =========================*/
+
 SWEP.MagDrop = false -- Drop a mag on reload?
 SWEP.MagModel = "" -- Mag model
 SWEP.MagDropTime = 0.5 -- When to drop mag model (in seconds)?
+
+
+/*======================== Viewmodel Stuff =======================*/
+
+SWEP.BuuSwayScale = 60 -- How much weapon sway
+
+SWEP.IronSightsPos = Vector(-6.481, 0, 1.039) -- Ironsight
+SWEP.IronSightsAng = Vector(0, 0, 0)
+
+SWEP.RunArmPos = Vector(1.358, 1.228, -0.94) -- Sprinting and near wall
+SWEP.RunArmAng = Vector(-10.554, 34.167, -20)
+
+SWEP.CrouchPos = Vector(-1,-1,.5) -- Moves the gun when you crouch
+SWEP.CrouchAng = Vector(0, 0, 0)
+
+SWEP.UseNormalShootIron = true -- Use act_vm_primaryattack in ironsights?
+
+-- If above is false, it will use this as the animation. Just give it the 
+-- same value as your Ironsights but with the Y pushed back a bit to simulate
+-- the gun going back when you shoot.
+SWEP.IronSightsShootPos = SWEP.IronSightsPos 
+SWEP.IronSightsShootAng = SWEP.IronSightsAng
+
+
+/*====================== Ironsight Settings ======================*/
+
+SWEP.IronsightFOV = 65 -- FOV when in ironsights
+SWEP.IronsightMoveIntensity = 2 -- Ironsight sway
+
+SWEP.IronsightSound = 2 -- 0 = none, 1 = pistol, 2 = smg, 3 = rifle
+
+
+/*========================= Animations ==========================*/
+
+SWEP.UseLastShoot = false -- Do you have a act_vm_primaryattack_empty?
+SWEP.UseLastReload = false -- Do you have a act_vm_reload_empty?
+SWEP.UseLastIdle = false -- Do you have a act_vm_idle_empty?
+SWEP.UseLastDraw = false-- Do you have a act_vm_draw_empty? 
+
+
+/*==================================================================
+					Custom settings end here
+==================================================================*/
 
 -- Networked Variables for Prediction
 function SWEP:SetupDataTables()
@@ -121,17 +157,17 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Float",6,"Buu_ViewPunch2")
     self:NetworkVar("Float",7,"Buu_MagDropTime") -- Predicted timer for dropping a mag model
     self:NetworkVar("Float",8,"Buu_TimeToScope") -- Predicted timer for going to the scope on a sniper rifle
-	self:NetworkVar("Float",9,"Buu_JumpTime")
-	self:NetworkVar("Float",10,"Buu_LandTime")
     self:NetworkVar("Bool",0,"Buu_Reloading") -- Are we reloading?
     self:NetworkVar("Bool",1,"Buu_CanCancelReloading") -- Can we stop the shotgun's reload?
     self:NetworkVar("Bool",2,"Buu_Ironsights") -- Are we in ironsights?
     self:NetworkVar("Bool",3,"Buu_Sprinting") -- Do I really need to explain what this does?
 end
 
+
 function SWEP:Initialize()
 	if CLIENT then
-	
+		self.JumpTime = 0
+		self.LandTime = 0
 		-- We need to get these so we can scale everything to the player's current resolution.
 		local iScreenWidth = surface.ScreenWidth()
 		local iScreenHeight = surface.ScreenHeight()
@@ -179,6 +215,7 @@ function SWEP:Initialize()
 	self.Primary.Automatic2 = self.Primary.Automatic
 end
 
+
 function SWEP:Deploy() 
     self:SetBuu_ViewPunch1(math.Rand(-0.5,-2.5)) -- This sets the V
     self:SetBuu_ViewPunch2(math.Rand(-1,1))
@@ -193,12 +230,14 @@ function SWEP:Deploy()
 	self.Owner:GetViewModel():SetBodygroup(2,0)
 end
 
+
 function SWEP:Holster()
     self:SetBuu_ReloadTimer(0)
     self:SetBuu_Reloading(false)
     self:SetBuu_ReloadGiveAmmo(0)
     return true
 end
+
 
 local myrecoil = 0
 local myrecoilyaw = 0
@@ -217,6 +256,13 @@ function SWEP:PrimaryAttack() -- This is because SWEP.Primary.Automatic wasn't w
 		self:ShootCode()
 	end
 end
+
+
+SWEP.BS = Sound("weapons/ar2/ar2_empty.wav")
+
+concommand.Add( "buu_base_emitsoundlow", function( ply, cmd, args )
+	EmitSound(args[1], ply:GetPos(), ply:EntIndex(), CHAN_VOICE2 )
+end )
 
 function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
 
@@ -246,7 +292,7 @@ function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
     if !self.Owner:KeyDown(IN_USE) then
         if self:GetBuu_Sprinting() == false && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 ) then
             if self.Weapon:Clip1() <= 0 then 
-                self:EmitSound( "Weapon_Shotgun.Empty",75,100,CHAN_ITEM )
+                self:EmitSound( "Weapon_Shotgun.Empty", 75, 100, 1, CHAN_VOICE2 ) 
                 self.Primary.Automatic = false
             else
                 myrecoil = myrecoil + 10
@@ -259,9 +305,10 @@ function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
                 end
                 self:CSShootBullet(self.Primary.Damage, self.Primary.Delay, self.Primary.NumShots, self.Primary.Cone)
                 if self.Silenced == false then
-                    self.Weapon:EmitSound(self.Primary.Sound,100,math.random(97,102))
+                    self:EmitSound(self.Primary.Sound,100,math.random(97,102), 1, CHAN_WEAPON)
+					self.Owner:ConCommand("buu_base_emitsoundlow "..self.BS)
                 else
-                    self.Weapon:EmitSound(self.Primary.SoundSilenced,100,math.random(97,102))
+                    self:EmitSound(self.Primary.SoundSilenced,100,math.random(97,102))
                 end
                 self:TakePrimaryAmmo(self.Primary.TakeAmmo)
                 if self.Shotgun && self.ShotgunMode == 0 then
@@ -277,6 +324,7 @@ function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
     end
 
 end
+
 
 function SWEP:Recoil() -- Custom weapon recoil because Garry's is shitty shit shit
 	if CLIENT then
@@ -301,6 +349,7 @@ function SWEP:Recoil() -- Custom weapon recoil because Garry's is shitty shit sh
 	end
 end
 
+
 -- Real men don't need SWEP:SecondaryAttack()
 function SWEP:SecondaryAttack() 
 end
@@ -308,18 +357,8 @@ end
 
 -- Where the real magic happens
 function SWEP:Think() 
-    local Tr = self.Owner:GetEyeTrace()
-    if (Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 ) then -- Near a wall?
-        
-        -- This needs revision because it doesn't work. I'll fix it sometime
-        --if self.Weapon:Clip1() <= 0 && self.UseLastIdle then 
-        --self.Weapon:SendWeaponAnim( ACT_VM_IDLE_EMPTY )
-        --else
-        --self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
-        --end
-
-    end
     
+	local Tr = self.Owner:GetEyeTrace()
 	if !self.Shotgun && self.Owner:KeyPressed(IN_RELOAD) && CurTime() > self:GetNextPrimaryFire() && !self:GetBuu_Reloading() == true && self.Weapon:Clip1() < self.Primary.ClipSize && self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) > 0 then -- Witness me!
 		self:SetBuu_Reloading(true)
         self:SetBuu_MagDropTime(CurTime()+self.MagDropTime)
@@ -341,8 +380,15 @@ function SWEP:Think()
 	if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 ) && !self:GetBuu_Reloading() == true) then
         if self:GetBuu_Ironsights() == false then
             self:SetBuu_TimeToScope(CurTime()+0.25)
+			self:SetBuu_Ironsights(true)
+			if self.IronsightSound == 1 then
+				self:EmitSound( "buu/base/ironsight_pistol"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			elseif self.IronsightSound == 2 then
+				self:EmitSound( "buu/base/ironsight_smg"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			elseif self.IronsightSound == 3 then
+				self:EmitSound( "buu/base/ironsight_rifle"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			end
         end
-		self:SetBuu_Ironsights(true)
         self.DrawCrosshair = false
         if self.Sniper && self:GetBuu_TimeToScope() < CurTime() then
             self.Owner:DrawViewModel( false )
@@ -351,14 +397,23 @@ function SWEP:Think()
             self.Owner:SetFOV( self.SniperZoom, 0.02 )
         end
 	else
+		if self:GetBuu_Ironsights() == true then
+			self:SetBuu_Ironsights(false)
+			if self.IronsightSound == 1 then
+				self:EmitSound( "buu/base/ironsight_pistol"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			elseif self.IronsightSound == 2 then
+				self:EmitSound( "buu/base/ironsight_smg"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			elseif self.IronsightSound == 3 then
+				self:EmitSound( "buu/base/ironsight_rifle"..tostring(math.random(1,5))..".wav", 75, 100, 1, CHAN_VOICE2 ) 
+			end
+        end
         self.DrawCrosshair = true
-		self:SetBuu_Ironsights(false)
         self:SetBuu_TimeToScope(0)
         if self.Sniper then
-        self.Owner:DrawViewModel( true )
-        self.Owner:GetViewModel():SetRenderMode(RENDERMODE_NORMAL)
-        self.Owner:GetViewModel():SetColor(Color(255,255,255,255))
-        self.Owner:SetFOV( 0, 0.01 )
+			self.Owner:DrawViewModel( true )
+			self.Owner:GetViewModel():SetRenderMode(RENDERMODE_NORMAL)
+			self.Owner:GetViewModel():SetColor(Color(255,255,255,255))
+			self.Owner:SetFOV( 0, 0.01 )
         end
 	end
     if self.Sniper && CurTime() < self:GetNextPrimaryFire() && self:GetBuu_Ironsights() then
@@ -372,8 +427,9 @@ function SWEP:Think()
         self.Owner:SetFOV( 0, 0.01 )
         end
     end
-	if self.Owner:KeyDown(IN_SPEED) && !self.Owner:KeyDown(IN_DUCK) && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) then -- Amazing chest ahead
+	if self.Owner:KeyDown(IN_SPEED) && self.Owner:GetVelocity():Length() > self.Owner:GetWalkSpeed() && !self.Owner:KeyDown(IN_DUCK) && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) then -- Amazing chest ahead
 		self:SetBuu_Sprinting(true)
+		
 	else
 		self:SetBuu_Sprinting(false)
 	end
@@ -415,34 +471,36 @@ function SWEP:Think()
         self:DoMyReload() -- Predicted shotgun reload function
     end
     self:MagazineDrop() -- Predicted mag drop function
-	
-	if (self.Owner:IsOnGround() || self:GetBuu_JumpTime() < CurTime()) && self:GetBuu_JumpTime() != 0 then
-		self:SetBuu_JumpTime(0)
-	end
+	if CLIENT then
 
-	if !self.Owner:IsOnGround() then
-		self:SetBuu_LandTime(CurTime() + 0.31)
-	end
+		if !self.Owner:IsOnGround() then
+			self.LandTime = RealTime() + 0.31
+		end
 
-	if self.Owner:GetMoveType() == MOVETYPE_NOCLIP || (self:GetBuu_LandTime() < CurTime() && self:GetBuu_LandTime() != 0) then
-		self:SetBuu_LandTime(0)
-	end
+		if (self.Owner:GetMoveType() == MOVETYPE_NOCLIP || self.Owner:GetMoveType() == MOVETYPE_LADDER || self.Owner:WaterLevel() > 1 ) || (self.LandTime < RealTime() && self.LandTime != 0) then
+			self.LandTime = 0
+			self.JumpTime = 0
+		end
 
-	if self.Owner:KeyDownLast( IN_JUMP ) then
-		if self:GetBuu_JumpTime() == 0 then	
-			self:SetBuu_JumpTime(CurTime() + 0.31)
-			self:SetBuu_LandTime(0)
+		if self.Owner:KeyDownLast( IN_JUMP ) then
+			if self.JumpTime == 0 then
+				self.JumpTime = RealTime() + 0.31
+				self.LandTime = 0
+			end
 		end
 	end
 end
+
 
 -- Real men code their own SWEP:Reload() (Mine's in think)
 function SWEP:Reload() 
 end
 
+
 -- Dropping Mags
 function SWEP:MagazineDrop()
-    if self:GetBuu_MagDropTime() < CurTime() && !(self:GetBuu_MagDropTime() == 0) && self.DropMag then
+	if !self.MagDrop then return end
+    if self:GetBuu_MagDropTime() < CurTime() && !(self:GetBuu_MagDropTime() == 0) then
         self:SetBuu_MagDropTime(0)
         local shotpos = self.Owner:GetShootPos()
         shotpos = shotpos + self.Owner:GetForward()*-15
@@ -461,6 +519,7 @@ function SWEP:MagazineDrop()
         end
     end
 end
+
 
 -- This is my super sexy CalcView. Don't touch it
 local myfov = 75
@@ -590,26 +649,33 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 	end
 end
 
+
 -- Not working Laser. For the love of god don't touch this broken piece of shit
-local LASER = Material('cable/redlaser')
+local LASER = Material('sprites/physgbeamb')
 function SWEP:ViewModelDrawn()
     if self.Laser == true then
         local vm = self.Owner:GetViewModel()
-        local ang = vm:GetAngles()
-        local att = vm:LookupAttachment("1")
-        local Angle = self.Owner:GetViewModel():GetAttachment(1).Ang
-        local Vec1 = self.Owner:GetViewModel():GetAttachment(1).Pos
-        local Vec2 = self.Owner:GetViewModel():GetAttachment(1).Pos + Angle:Forward()*100
-        render.SetMaterial(LASER)
-        render.DrawBeam(Vec1, Vec2, 2, 0, 1, Color(255,0,0))
+		local BoneIndx = vm:LookupBone("ValveBiped.Bip01_R_Hand")
+		local BonePos, BoneAng = vm:GetBonePosition( BoneIndx )
+        local Vec1 = LocalToWorld(Vector(25, -7, -5), BoneAng, BonePos, BoneAng)
+
+        local m = ClientsideModel("models/Items/AR2_Grenade.mdl", RENDERGROUP_OTHER)
+		m:SetPos(Vec1)
+		m:SetAngles(BoneAng)
+		m:DrawModel()
+		m:Remove()
+		
+		render.SetMaterial(LASER)
+        render.DrawBeam(Vec1, Vec1 + BoneAng:Forward()*100, 1, 0, 1, Color(255,0,0))
     end
 end
 
--- This is where all the sexy movement in the viewmodel happens. This shit is bootyfull
--- If you guys get the chance, go give Kudo's to MushroomGuy for teaching me Lerp
--- Lerp is one of the coolest and most sexy things to come to Garry's Mod
--- Wow are these comments that interesting that you're still reading them?
+
 if CLIENT then
+	-- This is where all the sexy movement in the viewmodel happens. This shit is bootyfull
+	-- If you guys get the chance, go give Kudo's to MushroomGuy for teaching me Lerp
+	-- Lerp is one of the coolest and most sexy things to come to Garry's Mod
+	-- Wow are these comments that interesting that you're still reading them?
 	local TestVector = Vector(0,0,0)
 	local TestVectorAngle = Vector(0,0,0)
 	local TestVector2 = Vector(0,0,0)
@@ -620,14 +686,21 @@ if CLIENT then
 	local CrouchAng2=0
 	local Current_Aim = Angle(0,0,0)
 	local Off, Off2, Off3, dist = 0, 0, 0, 0
-	SWEP.LastEyeSpeed = Angle(0,0,0)
-	SWEP.EyeSpeed = Angle(0,0,0)
+	SWEP.LastEyePosition = Angle(0,0,0)
+	SWEP.EyePosition = Angle(0,0,0)
+	
 	function SWEP:GetViewModelPosition(pos, ang)
 		if !IsValid(self.Owner) then return end
 		local ply = LocalPlayer()
 		local weapon = ply:GetActiveWeapon()
 		local walkspeed = self.Owner:GetVelocity():Length() 
-		if (self:GetBuu_JumpTime() != 0 && self.Owner:GetVelocity().z > 0) || self:GetBuu_LandTime() > CurTime() then
+		
+		
+		/*--------------------------------------------
+				  Animation Transition Speed 
+		--------------------------------------------*/
+		
+		if self.LandTime > RealTime() then
 			TestVector = LerpVector(20*FrameTime(),TestVector,TestVectorTarget) 
             TestVectorAngle = LerpVector(20*FrameTime(),TestVectorAngle,TestVectorAngleTarget)
         elseif IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then
@@ -656,6 +729,12 @@ if CLIENT then
 		if !IsValid(self.Owner) then return end
 		local Tr = self.Owner:GetEyeTrace()
 		local walkspeed = self.Owner:GetVelocity():Length() 
+		
+		
+		/*--------------------------------------------
+		Ironsight, Crouching, Near Wall, and Sprinting
+		--------------------------------------------*/
+		
         if self:GetBuu_Ironsights() && !self:GetBuu_Reloading() == true then 	
         	if self:GetBuu_GotoIdle() > CurTime() && self.UseNormalShootIron == false then
                 TestVectorTarget = self.IronSightsPos + (self.IronSightsShootPos-self.IronSightsPos)
@@ -664,14 +743,14 @@ if CLIENT then
             end
             TestVectorAngleTarget = self.IronSightsAng
         elseif self:GetBuu_Sprinting() && !self:GetBuu_Reloading() == true && !self.Owner:KeyDown(IN_DUCK) then 
-            TestVectorTarget = self.RunArmOffset
-            TestVectorAngleTarget = self.RunArmAngle
+            TestVectorTarget = self.RunArmPos
+            TestVectorAngleTarget = self.RunArmAng
         elseif Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40 && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true) then 
-            TestVectorTarget = self.RunArmOffset
-            TestVectorAngleTarget = self.RunArmAngle
+            TestVectorTarget = self.RunArmPos
+            TestVectorAngleTarget = self.RunArmAng
         elseif self.Owner:Crouching() && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then 
             TestVectorTarget = self.CrouchPos
-            TestVectorAngleTarget = Vector(0,0,0)
+            TestVectorAngleTarget = self.CrouchAng
         else
             TestVectorTarget = Vector(0,0,0)
             TestVectorAngleTarget = Vector(0,0,0)
@@ -685,11 +764,11 @@ if CLIENT then
 		-- Use this if you gotta https://www.desmos.com/calculator/cahqdxeshd
 		local function BezierY(f,a,b,c)
 			f = f*3.2258
-			return (1-f)^2 *a + 2*(1-f)*f*b + f*f*c
+			return (1-f)^2 *a + 2*(1-f)*f*b + (f^2)*c
 		end
-		if !self:GetBuu_Ironsights() then
-			if self:GetBuu_JumpTime() != 0 then
-				local f = 0.31 - (self:GetBuu_JumpTime()-CurTime())
+		if !self:GetBuu_Ironsights() && self.Owner:WaterLevel() < 1 then
+			if self.JumpTime > RealTime() then
+				local f = 0.31 - (self.JumpTime-RealTime())
 
 				local xx = BezierY(f,0,-4,0)
 				local yy = 0
@@ -705,8 +784,8 @@ if CLIENT then
 				local BreatheTime = RealTime() * 30
 				TestVectorTarget = TestVectorTarget + Vector(math.cos(BreatheTime/2)/16, 0, -5+(math.sin(BreatheTime/3)/16))
 				TestVectorAngleTarget = TestVectorAngleTarget + Vector(10-(math.sin(BreatheTime/3)/4), math.cos(BreatheTime/2)/4, -5)
-			elseif self:GetBuu_LandTime() > CurTime() then
-				local f = (self:GetBuu_LandTime()-CurTime())
+			elseif self.LandTime > RealTime() then
+				local f = (self.LandTime-RealTime())
 				
 				local xx = BezierY(f,0,-4,0)
 				local yy = 0
@@ -723,13 +802,16 @@ if CLIENT then
 			TestVectorTarget = TestVectorTarget + Vector(0 ,0 , math.Clamp(self.Owner:GetVelocity().z / 1000,-1,1))
 		end
 		
+		
 		/*--------------------------------------------
 					  Viewmodel Bobbing
 		--------------------------------------------*/
 		
         if ply:IsOnGround() then
-			if self:GetBuu_Sprinting() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true)	 then
-				-- Fix
+			if self:GetBuu_Sprinting() && (!self:GetBuu_Reloading() == true) then
+				local BreatheTime = RealTime() * 18
+				TestVectorTarget = TestVectorTarget - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400,0,math.cos(BreatheTime)*walkspeed/400)
+				TestVectorAngleTarget = TestVectorAngleTarget - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400,0)
 			elseif walkspeed > 20 && !(Tr.Hit and Tr.HitPos:Distance(self.Owner:GetShootPos()) < 40) then
 				local BreatheTime = RealTime() * 16
 				if self:GetBuu_Ironsights() then
@@ -745,27 +827,27 @@ if CLIENT then
 			end
 		end
 		
-		
+	
 		/*--------------------------------------------
 						Viewmodel Sway
 		--------------------------------------------*/
 		
-		self.LastEyeSpeed = self.EyeSpeed
+		self.LastEyePosition = self.EyePosition
 		
 		Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
 		
-		self.EyeSpeed = Current_Aim - ply:EyeAngles()
-		self.EyeSpeed.y = math.AngleDifference( Current_Aim.y, ply:EyeAngles().y ) -- Thank you MushroomGuy for telling me this function even existed
+		self.EyePosition = Current_Aim - ply:EyeAngles()
+		self.EyePosition.y = math.AngleDifference( Current_Aim.y, ply:EyeAngles().y ) -- Thank you MushroomGuy for telling me this function even existed
 		
-		ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyeSpeed.p/self.BuuSwayScale,-4,4))
-		ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyeSpeed.y/self.BuuSwayScale,-4,4))
+		ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale,-4,4))
+		ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale,-4,4))
 
-		pos = pos + math.Clamp((-1.5*self.EyeSpeed.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
-		pos = pos + math.Clamp((-1.5*self.EyeSpeed.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
+		pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
+		pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
+		
 		return pos, ang
 	end
 end
-
 
 -- Now comes Ironsight swaying. 
 function CalcMoveForce(ply)
@@ -793,11 +875,11 @@ function IronIdleMove(cmd)
 		local ang = cmd:GetViewAngles()
 		if weapon:GetBuu_Ironsights() then
 			local ft = FrameTime()
-			local BreatheTime = RealTime() * weapon.IronsightMoveIntensity
+			local BreatheTime = RealTime() * 2
 			local MoveForce = CalcMoveForce(ply)
 				   
-			ang.pitch = ang.pitch + math.cos(BreatheTime) / MoveForce
-			ang.yaw = ang.yaw + math.cos(BreatheTime/2) / MoveForce
+			ang.pitch = ang.pitch + math.cos(BreatheTime)*weapon.IronsightMoveIntensity / MoveForce
+			ang.yaw = ang.yaw + math.cos(BreatheTime/2)*weapon.IronsightMoveIntensity / MoveForce
 			
 		end
 		if !IsValid(weapon) then return end
@@ -805,6 +887,7 @@ function IronIdleMove(cmd)
 	end
 end
 hook.Add ("CreateMove", "BuuIronIdleMove", IronIdleMove)
+
 
 -- Had to do this shit to get the slienced muzzleflash thing to work. Pretty annoying because it makes my code larger :/
 function SWEP:FireAnimationEvent(pos,ang,event)
@@ -834,6 +917,7 @@ function SWEP:FireAnimationEvent(pos,ang,event)
 		return true
 	end
 end
+
 
 -- Shotgun reload stuff
 function SWEP:StartMyReload()
@@ -870,6 +954,7 @@ function SWEP:FinishMyReload()
         self:SetBuu_ReloadTimer(CurTime() + self.Owner:GetViewModel():SequenceDuration())
     end
 end
+
 
 -- Adjust mouse sensitivity for use in scopes
 function SWEP:AdjustMouseSensitivity()
