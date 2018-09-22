@@ -59,7 +59,7 @@ function ENT:Initialize()
 		phys:Wake()
 	end
 
-	timer.Simple(30,function() if !IsValid(self.Entity) then return end if SERVER then self:Remove() end end)
+	timer.Simple(GetConVar("sv_buu_magdroplifetime"):GetInt(),function() if !IsValid(self.Entity) then return end if SERVER then self:Remove() end end)
 end
 
 
