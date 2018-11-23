@@ -10,16 +10,24 @@ Sadly, my old sweps broke as a result, so those need to be fixed
 Have fun! And bring some tissues because this stuff might be ugly
 
 Todo:
-	- Fix viewmodel sway
-	- Fix Laser
-	- Smoke Trail not working in multiplayer?
-	- Reload sometimes doesn't work but animation does
-	- Custom 3rd person animations
-	- Flashlight uses attachment positions
-	- Flashlight on default and crazy toggle bugs
-	- Slide
+	- Fix viewmodel sway when turning too fast
+        - Smoke Trail net fakelag
+        - Viewpunch buggy in multiplayer
+    - Flashlight in multiplayer?
+        - Make reload ANIM CLIENT and net it to SERVER
+    - Pistol sprint animation
 	- Standardize crosshair gap (use MP5 for good standard)
+	- Custom 3rd person animations
 -------------------------------------------------------------------------------------------------------------------------------------*/
+
+/*
+if ( CLIENT && IsFirstTimePredicted( ) ) then
+    local recoil = math.Rand( 0.5, 1.5 );
+	local _eyes = self.Owner:EyeAngles( );
+	_eyes.pitch = math.Clamp( _eyes.pitch - recoil, -90, 90 );
+	self.Owner:SetEyeAngles( _eyes );
+end
+*/
 
 if ( CLIENT ) then
 	SWEP.DrawAmmo = true
@@ -69,12 +77,21 @@ SWEP.Secondary.Ammo = "none"
 /*==================================================================
 					Custom settings start here
 ==================================================================*/
-SWEP.BurstFire = false
-SWEP.BurstTime = 0.075
+SWEP.Primary.Sounds = { SWEP.Primary.Sound } -- Table to put all the shooting sounds (if you want more than one)
+SWEP.Primary.SoundChannelSwap = false -- Swap between CHAN_WEAPON and another channel during shooting (Helps some weapons sound better)
+SWEP.BurstFire = false -- Burst fire instead of semi auto/auto
+SWEP.BurstTime = 0.075 -- Time between burst shots
 
-SWEP.Laser = false -- Don't touch, it's broken
 SWEP.Silenced = false -- Gives you silenced muzzle flash and uses SWEP.Primary.SoundSilenced
 SWEP.Hold = "rifle" -- pistol, shotgun, rifle
+
+
+/*======================= Laser Settings =======================*/
+
+SWEP.Laser = false -- Enable/disable laser
+SWEP.LaserBone = "ValveBiped.Bip01_R_Hand" -- What bone to attach the laser to
+SWEP.LaserPos = Vector(0,0,0) -- What position to translate the laser
+SWEP.LaserAng = Angle(0,0,0) -- What angle to translate the laser
 
 
 /*======================= Shotgun Settings =======================*/
@@ -83,14 +100,16 @@ SWEP.Shotgun = false -- Shotgun reload?
 SWEP.ShotgunSwitchMode = false -- Allow swap between auto and pump mode?
 SWEP.ShotgunMode2Delay = 0.95 -- If using a different shotgun shoot animation, what's the delay per shot?
 SWEP.ShotgunMode = 0 -- Pump (0) or Auto (1)
+SWEP.ShotgunReloadAmount = 1 -- How many shells to reload at once
 SWEP.DestroyDoor = false -- Does a shotgun break down doors?
 
 
 /*======================== Scope Settings ========================*/
 
 SWEP.Sniper         = false -- Sniper rifle scope?
+SWEP.AutoSniper     = false -- Get out of scope when shooting
 SWEP.SniperZoom 	= 30 -- Zoom on sniper rifle
-SWEP.ScopeScale 	= 0.5 -- Don't change
+SWEP.ScopeScale 	= 0.5 -- How much of the screen does the sniper scope take up
 SWEP.SniperTexture  = "scope/fc3Scope" -- scope texture
 
 
@@ -104,7 +123,7 @@ SWEP.ReloadAmmoTimeLast = 0.7 -- When does the ammo appear in the mag when you u
 
 SWEP.MagDrop = false -- Drop a mag on reload?
 SWEP.MagModel = "" -- Mag model
-SWEP.MagDropTime = 0.5 -- When to drop mag model (in seconds)?
+SWEP.MagDropTime = 0.5 -- When to drop mag model (in seconds)
 
 
 /*======================== Viewmodel Stuff =======================*/
@@ -134,7 +153,7 @@ SWEP.IronSightsShootAng = SWEP.IronSightsAng
 SWEP.IronsightFOV = 65 -- FOV when in ironsights
 SWEP.IronsightMoveIntensity = 2 -- Ironsight sway
 
-SWEP.IronsightSound = 2 -- 0 = none, 1 = pistol, 2 = smg, 3 = rifle
+SWEP.IronsightSound = 2 -- none (0), pistol (1), smg (2), rifle (3)
 
 
 /*========================= Animations ==========================*/
@@ -147,14 +166,11 @@ SWEP.UseLastDraw = false-- Do you have a act_vm_draw_empty?
 SWEP.EmptySound = Sound("buu/base/empty.wav")
 
 
-/*======================= Customizability =======================*/
-
-SWEP.CanSilence = false
-
-
 /*==================================================================
 					Custom settings end here
 ==================================================================*/
+
+SWEP.IsBuuBase = true -- Don't touch
 
 -- Networked Variables for Prediction
 function SWEP:SetupDataTables()
@@ -181,6 +197,7 @@ end
 
 
 function SWEP:Initialize()
+    -- Set other stuff
 	if CLIENT then
 		self.JumpTime = 0
 		self.LandTime = 0
@@ -241,6 +258,7 @@ function SWEP:Deploy()
     else
         self.Weapon:SendWeaponAnim( ACT_VM_DRAW )
     end
+    
 	self.Owner:DrawViewModel( true )
 	self.Weapon:SetNextPrimaryFire(CurTime() + self.Owner:GetViewModel():SequenceDuration())
 	self.Owner:GetViewModel():SetBodygroup(0,0)
@@ -249,7 +267,7 @@ function SWEP:Deploy()
 end
 
 
-function SWEP:Holster()
+function SWEP:Holster(holsterto)
 	self:FinishMyReload()
     self:SetBuu_ReloadTimer(0)
     self:SetBuu_Reloading(false)
@@ -279,6 +297,7 @@ function SWEP:PrimaryAttack() -- This is because SWEP.Primary.Automatic wasn't w
 	end
 end
 
+local shootchannel = CHAN_WEAPON
 function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
 
 	if self:GetNextPrimaryFire() > CurTime() then return end
@@ -311,74 +330,64 @@ function SWEP:ShootCode() -- Did this here to make SWEP.Primary.Automatic work
                 self.Primary.Automatic = false
 				return
 			end
-			if self.BurstFire then
-				if self:GetBuu_BurstCount() >= 3 || !self.Owner:KeyDown(IN_ATTACK) then
-					self:SetBuu_BurstCount(0)
-					self:SetBuu_LastBurst(0)
-					self:SetBuu_GotoIdle(CurTime() + 0.04)
-					self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-					self.Primary.Automatic = false
-				elseif self:GetBuu_BurstCount() < 3 && self:GetBuu_LastBurst() < CurTime() then
-					myrecoil = myrecoil + 10
-					self.Primary.Automatic = true
-					self:Recoil()
-					self:ShootEffects()
-					if GetConVar("cl_buu_barrelsmoke"):GetInt() == 1 then
-						if self:GetBuu_LastFire() < self.Primary.Delay*10 then
-							self:SetBuu_LastFire(self:GetBuu_LastFire()+self.Primary.Delay*4)
-						end
-					end
-					if self:GetBuu_Ironsights() then
-						self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil / 2), self:GetBuu_ViewPunch2() * (self.Primary.Recoil / 2), 0))
-					else
-						self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil), self:GetBuu_ViewPunch2() * (self.Primary.Recoil), 0))
-					end
-					self:CSShootBullet(self.Primary.Damage, self.Primary.Delay, self.Primary.NumShots, self.Primary.Cone)
-					if self.Silenced == false then
-						self:EmitSound(self.Primary.Sound,100,math.random(97,102), 1, CHAN_WEAPON)
-					else
-						self:EmitSound(self.Primary.SoundSilenced,100,math.random(97,102))
-					end
-					if self:Clip1() <= math.ceil(self.Primary.ClipSize/4) && GetConVar("cl_buu_lowammowarn"):GetInt() == 1 then
-						self:EmitSound("weapons/shotgun/shotgun_empty.wav",75,100,1,CHAN_ITEM)
-					end
-					self:TakePrimaryAmmo(self.Primary.TakeAmmo)
-					self:SetBuu_BurstCount(self:GetBuu_BurstCount() + 1)
-					self:SetBuu_LastBurst(CurTime()+self.BurstTime)
-				end
-            else
+
+            if self:GetBuu_BurstCount() >= 3 || !self.Owner:KeyDown(IN_ATTACK) then
+                self:SetBuu_BurstCount(0)
+                self:SetBuu_LastBurst(0)
+                self:SetBuu_GotoIdle(CurTime() + 0.04)
+                self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+                self.Primary.Automatic = false
+            elseif (self:GetBuu_BurstCount() < 3 && self:GetBuu_LastBurst() < CurTime()) || !self.BurstFire then
                 myrecoil = myrecoil + 10
-                self.Primary.Automatic = self.Primary.Automatic2
-                self:Recoil()
-				self:ShootEffects()
-				if GetConVar("cl_buu_barrelsmoke"):GetInt() == 1 then
-					if self:GetBuu_LastFire() < self.Primary.Delay*10 then
-						self:SetBuu_LastFire(self:GetBuu_LastFire()+self.Primary.Delay*4)
-					end
-				end
-                if self:GetBuu_Ironsights() then
-                    self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil / 2), self:GetBuu_ViewPunch2() * (self.Primary.Recoil / 2), 0))
+                if self.BurstFire then
+                    self.Primary.Automatic = self.Primary.Automatic2
                 else
-                    self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil), self:GetBuu_ViewPunch2() * (self.Primary.Recoil), 0))
+                    self.Primary.Automatic = true
+                end
+                self:Recoil()
+                self:ShootEffects()
+                if GetConVar("cl_buu_barrelsmoke"):GetInt() == 1 then
+                    if self:GetBuu_LastFire() < self.Primary.Delay*10 then
+                        self:SetBuu_LastFire(self:GetBuu_LastFire()+self.Primary.Delay*4)
+                    end
+                end
+                if IsFirstTimePredicted() then
+                    if self:GetBuu_Ironsights() then
+                        self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil / 2), self:GetBuu_ViewPunch2() * (self.Primary.Recoil / 2), 0))
+                    else
+                        self.Owner:ViewPunch(Angle(self:GetBuu_ViewPunch1() * (self.Primary.Recoil), self:GetBuu_ViewPunch2() * (self.Primary.Recoil), 0))
+                    end
                 end
                 self:CSShootBullet(self.Primary.Damage, self.Primary.Delay, self.Primary.NumShots, self.Primary.Cone)
+                if self.Primary.SoundChannelSwap == true then
+                    if shootchannel == CHAN_WEAPON then
+                        shootchannel = CHAN_WEAPON+100
+                    else
+                        shootchannel = CHAN_WEAPON
+                    end
+                end
                 if self.Silenced == false then
-                    self:EmitSound(self.Primary.Sound,100,math.random(97,102), 1, CHAN_WEAPON)
+                    self:EmitSound(self.Primary.Sounds[math.random(1, #self.Primary.Sounds)],100,math.random(97,102), 1, shootchannel)
                 else
-                    self:EmitSound(self.Primary.SoundSilenced,100,math.random(97,102))
+                    self:EmitSound(self.Primary.SoundSilenced,100,math.random(97,102),1,shootchannel)
                 end
-				if self:Clip1() <= math.ceil(self.Primary.ClipSize/4) && GetConVar("cl_buu_lowammowarn"):GetInt() == 1 then
-					self:EmitSound("weapons/shotgun/shotgun_empty.wav",75,100,1,CHAN_ITEM)
-				end
+                if self:Clip1() <= math.ceil(self.Primary.ClipSize/4) && GetConVar("cl_buu_lowammowarn"):GetInt() == 1 then
+                    self:EmitSound("weapons/shotgun/shotgun_empty.wav",75,100,1,CHAN_ITEM)
+                end
                 self:TakePrimaryAmmo(self.Primary.TakeAmmo)
-                if self.Shotgun && self.ShotgunMode == 0 then
-                    self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
-                elseif self.Shotgun && self.ShotgunMode == 1 then
-                    self:SetNextPrimaryFire(CurTime() + self.ShotgunMode2Delay)
+                if self.BurstFire then
+                    self:SetBuu_BurstCount(self:GetBuu_BurstCount() + 1)
+					self:SetBuu_LastBurst(CurTime()+self.BurstTime)
                 else
-                    self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+                    if self.Shotgun && self.ShotgunMode == 0 then
+                        self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+                    elseif self.Shotgun && self.ShotgunMode == 1 then
+                        self:SetNextPrimaryFire(CurTime() + self.ShotgunMode2Delay)
+                    else
+                        self:SetNextPrimaryFire(CurTime() + self.Primary.Delay)
+                    end
+                    self:SetBuu_GotoIdle(CurTime() + 0.04)
                 end
-                self:SetBuu_GotoIdle(CurTime() + 0.04)
             end
         end
     end
@@ -415,10 +424,14 @@ function SWEP:SecondaryAttack()
 end
 
 
-SWEP.Test = false
-
 -- Where the real magic happens
 function SWEP:Think() 
+
+    -- Set the correct shooting sound
+    if #self.Primary.Sounds == 1 && self.Primary.Sounds[1] != self.Primary.Sound then
+        self.Primary.Sounds[1] = self.Primary.Sound
+    end
+
 	if self.BurstFire && !self.Owner:KeyDown(IN_ATTACK) && self:GetBuu_BurstCount() < CurTime() && self:GetBuu_BurstCount() != 0 then
 		self:SetBuu_BurstCount(0)
 		self:SetBuu_LastBurst(0)
@@ -433,54 +446,33 @@ function SWEP:Think()
 	else
 		self:SetBuu_NearWall(false)
 	end
-	
-
-	if GetConVar("cl_buu_customflashlight"):GetInt() == 1 then
-		if SERVER && self.Owner:GetNWBool("BuuBase_Flashlight", false) == true then
-			self.Test = true
-			self.flashlight = ents.Create( "env_projectedtexture" )
-			
-			self.flashlight:SetParent( self.Owner:GetViewModel() )
-
-			-- The local positions are the offsets from parent..
-			self.flashlight:SetLocalPos( Vector(0,0,0) )
-			self.flashlight:SetLocalAngles( Angle( 0, 0, 0 ) )
-
-			self.flashlight:SetKeyValue( "enableshadows", 1 )
-			self.flashlight:SetKeyValue( "nearz", 1 )
-			self.flashlight:SetKeyValue( "lightfov", math.Clamp( 50, 10, 170 ) ) 
-
-			local dist = 712
-			if ( !game.SinglePlayer() ) then dist = math.Clamp( dist, 64, 2048 ) end
-			self.flashlight:SetKeyValue( "farz", dist )
-
-			local c = Color(255,255,255,255)
-			local b = 1
-			if ( !game.SinglePlayer() ) then b = math.Clamp( b, 0, 8 ) end
-			self.flashlight:SetKeyValue( "lightcolor", Format( "%i %i %i 255", c.r * b, c.g * b, c.b * b ) )
-
-			self.flashlight:Spawn()
-			self.flashlight:Remove()
-		end
-	end
 
 	local Tr = self.Owner:GetEyeTrace()
 	if !self.Shotgun && self.Owner:KeyPressed(IN_RELOAD) && CurTime() > self:GetNextPrimaryFire() && !self:GetBuu_Reloading() && self.Weapon:Clip1() < self.Primary.ClipSize && self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) > 0 then -- Witness me!
+        local anim
+        if self.Weapon:Clip1() <= 0 && self.UseLastReload then 
+            anim = ACT_VM_RELOAD_EMPTY
+            self.Weapon:SendWeaponAnim(anim)
+            self:SetBuu_ReloadTimer(CurTime() + self.Owner:GetViewModel():SequenceDuration())
+            self:SetBuu_ReloadGiveAmmo(CurTime() + self.Owner:GetViewModel():SequenceDuration()*self.ReloadAmmoTimeLast)
+        else
+            anim = ACT_VM_RELOAD
+            self.Weapon:SendWeaponAnim(anim)
+            self:SetBuu_ReloadTimer(CurTime() + self.Owner:GetViewModel():SequenceDuration())
+            self:SetBuu_ReloadGiveAmmo(CurTime() + self.Owner:GetViewModel():SequenceDuration()*self.ReloadAmmoTime)
+        end
+        if SERVER then
+            net.Start("BuuBaseSendReloadToClient")
+            net.WriteInt(anim, 32)
+            net.Send(self.Owner)
+        end
+        if CLIENT then return end
 		self:SetBuu_Reloading(true)
 		self:SetBuu_BurstCount(0)
 		self:SetBuu_LastBurst(0)
         self:SetBuu_MagDropTime(CurTime()+self.MagDropTime)
-        if self.Weapon:Clip1() <= 0 && self.UseLastReload then 
-            self:SetBuu_Reloading(true)
-            self.Weapon:SendWeaponAnim(ACT_VM_RELOAD_EMPTY)
-            self:SetBuu_ReloadTimer(CurTime() + self.Owner:GetViewModel():SequenceDuration())
-            self:SetBuu_ReloadGiveAmmo(CurTime() + self.Owner:GetViewModel():SequenceDuration()*self.ReloadAmmoTimeLast)
-        else
-			self:SetBuu_Reloading(true)
-            self.Weapon:SendWeaponAnim(ACT_VM_RELOAD)
-            self:SetBuu_ReloadTimer(CurTime() + self.Owner:GetViewModel():SequenceDuration())
-            self:SetBuu_ReloadGiveAmmo(CurTime() + self.Owner:GetViewModel():SequenceDuration()*self.ReloadAmmoTime)
-        end
+        
+        
 		if self.Hold == "pistol" then
 			self:SetWeaponHoldType( "pistol" )
 			self:SetHoldType("pistol")
@@ -543,7 +535,7 @@ function SWEP:Think()
 			self.Owner:SetFOV( 0, 0.01 )
         end
 	end
-    if self.Sniper && CurTime() < self:GetNextPrimaryFire() && self:GetBuu_Ironsights() then
+    if self.Sniper && !self.AutoSniper && CurTime() < self:GetNextPrimaryFire() && self:GetBuu_Ironsights() then
 		self:SetBuu_Ironsights(false)
         self:SetBuu_TimeToScope(0)
         if self.Sniper then
@@ -553,7 +545,7 @@ function SWEP:Think()
 			self.Owner:SetFOV( 0, 0.01 )
         end
     end
-	if self.Owner:KeyDown(IN_SPEED) && self.Owner:GetVelocity():Length() > self.Owner:GetWalkSpeed() && !self.Owner:KeyDown(IN_DUCK) && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) && GetConVar("sv_buu_sprinting"):GetInt() == 1 then -- Amazing chest ahead
+	if self.Owner:KeyDown(IN_SPEED) && self.Owner:GetVelocity():Length() > self.Owner:GetWalkSpeed() && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner.Sliding && GetConVar("sv_buu_slideshoot"):GetInt() == 0)) && self.Owner:IsOnGround() && (self.Owner:KeyDown(IN_FORWARD) || self.Owner:KeyDown(IN_BACK) || self.Owner:KeyDown(IN_MOVELEFT) ||self.Owner:KeyDown(IN_MOVERIGHT)) && GetConVar("sv_buu_sprinting"):GetInt() == 1 then -- Amazing chest ahead
 		self:SetBuu_Sprinting(true)
 	else
 		self:SetBuu_Sprinting(false)
@@ -597,7 +589,7 @@ function SWEP:Think()
         self:SetBuu_GotoIdle(0)
     end
 
-    if self:GetBuu_ReloadTimer() < CurTime() && !(self:GetBuu_ReloadTimer() == 0) then
+    if self:GetBuu_ReloadTimer() < CurTime() && !(self:GetBuu_ReloadTimer() == 0) && self:GetBuu_Reloading() == true then
         self:SetBuu_Reloading(false)
         self:SetBuu_ReloadTimer(0)
         self.Weapon:SendWeaponAnim( ACT_VM_IDLE )
@@ -615,8 +607,12 @@ function SWEP:Think()
         else
             local ammo = self.Owner:GetAmmoCount(self:GetPrimaryAmmoType())
             if ammo > 0 then
-                self.Owner:RemoveAmmo( 1, self.Weapon:GetPrimaryAmmoType() )
-                self.Weapon:SetClip1(self:Clip1()+1)
+                local shellstofill = math.min(self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()), self.ShotgunReloadAmount)
+                if self:Clip1()+shellstofill > self:GetMaxClip1() then
+                    shellstofill = self:GetMaxClip1() - self:Clip1()
+                end
+                self.Owner:RemoveAmmo( shellstofill, self.Weapon:GetPrimaryAmmoType() )
+                self.Weapon:SetClip1(self:Clip1()+shellstofill)
                 self:SetBuu_ReloadGiveAmmo(0)
             end
         end
@@ -679,9 +675,36 @@ function SWEP:Think()
 		end
 	end
 	
+    -- Flashlight    
+    if GetConVar("cl_buu_customflashlight"):GetInt() == 1 then
+		if SERVER && self.Owner:GetNWBool("BuuBase_Flashlight", false) then
+			self.flashlight = ents.Create( "env_projectedtexture" )
+	
+			self.flashlight:SetKeyValue( "enableshadows", 1 )
+			self.flashlight:SetKeyValue( "nearz", 1 )
+			self.flashlight:SetKeyValue( "lightfov", math.Clamp( 50, 10, 170 ) ) 
+            
+			local dist = 712
+			if ( !game.SinglePlayer() ) then dist = math.Clamp( dist, 64, 2048 ) end
+			self.flashlight:SetKeyValue( "farz", dist )
+
+			local c = Color(255,255,255,255)
+			local b = 1
+			if ( !game.SinglePlayer() ) then b = math.Clamp( b, 0, 8 ) end
+			self.flashlight:SetKeyValue( "lightcolor", Format( "%i %i %i 255", c.r * b, c.g * b, c.b * b ) )
+
+            self.flashlight:SetParent( self.Owner:GetViewModel() )
+			
+            self:HandleMuzzleAttachmentFlashlight(self.flashlight, self.Owner:GetViewModel())
+            
+            self.flashlight:Spawn()
+			self.flashlight:Remove()
+		end
+	end
+    
 	-- Barrel Smoke
 	//self.Owner:ChatPrint(self:GetBuu_LastFire().." / "..self.Primary.Delay*10)
-	if GetConVar("cl_buu_barrelsmoke"):GetInt() == 1 && ((game.SinglePlayer() && SERVER )|| !game.SinglePlayer()) then
+	if GetConVar("cl_buu_barrelsmoke"):GetInt() == 1 && ((game.SinglePlayer() && SERVER ) || (!game.SinglePlayer() && IsFirstTimePredicted())) then
 		if self:GetBuu_LastFire() > 0 then
 			self:SetBuu_LastFire(self:GetBuu_LastFire()-0.01)
 		elseif self:GetBuu_Smoking() == true then
@@ -697,12 +720,139 @@ function SWEP:Think()
 				fx:SetStart( self.Owner:GetShootPos( ) )
 				fx:SetNormal( self.Owner:GetAimVector( ) )
 				fx:SetAttachment( 1 )
-				util.Effect( "buu_smoketrail", fx )
+                util.Effect( "buu_smoketrail", fx )
 			end
 		end
 	end
+    
+    -- Sliding
+    if SERVER then
+        local vel = self.Owner:GetVelocity()
+        if self.Owner.SlideCond == nil then
+            self.Owner.SlideCond = false
+            self.Owner.SlideTime = nil
+            self.Owner.Sliding = false
+            self.Owner.SlideLastDir = self.Owner:GetForward()
+            self.Owner.NextSlideEffect = CurTime()
+            net.Start("BuuBaseSendSlideToClient")
+            net.WriteBool(self.Owner.Sliding)
+            net.WriteEntity(self.Owner)
+            net.Broadcast()
+        end
+        
+        if GetConVar("sv_buu_canslide"):GetInt() == 1 then
+            local tr = util.QuickTrace(self.Owner:GetPos(), (self.Owner:GetUp() * -1) * 20, self.Owner);
+            
+            if tr.Hit then
+                self.Owner.CanSlide = true
+            else
+                self.Owner.CanSlide = false
+            end
+            if !self.Owner.SlideCond && self.Owner:KeyDown(IN_SPEED) && self.Owner:KeyDown(IN_DUCK) && self.Owner.CanSlide && vel:Length() >= self.Owner:GetRunSpeed() then
+                if SERVER then
+                    self.Owner:EmitSound("physics/body/body_medium_impact_soft3.wav", math.Rand(80, 100), math.Rand(90, 120))
+                end
+                self.Owner.SlideCond = true
+                self.Owner.SlideLastVel = vel:Length()
+                self.Owner.SlideLastDir = vel:GetNormalized()
+                self.Owner.SlideTime = CurTime() + math.Clamp(self.Owner.SlideLastVel / 600, 0, 2)
+            elseif self.Owner.SlideCond && self.Owner.Sliding && !self.Owner:KeyDown(IN_SPEED) || !self.Owner:KeyDown(IN_DUCK) || !self.Owner.CanSlide then
+                self.Owner.SlideCond = false
+                self.Owner.SlideTime = nil
+                self.Owner.Sliding = false
+            end
+            
+            if self.Owner.SlideCond && self.Owner.SlideLastVel > 0 then
+                self.Owner.Sliding = true
+                self.Owner.SlideCond = true
+                
+                if self.Owner.SlideTime && self.Owner.SlideTime < CurTime() then
+                    self.Owner.SlideLastVel = self.Owner.SlideLastVel - FrameTime() * 600
+                end	
+                
+                self.Owner:SetLocalVelocity(self.Owner.SlideLastDir * self.Owner.SlideLastVel)
+                
+                if self.Owner.NextSlideEffect <= CurTime() then
+                    self.Owner.NextSlideEffect = CurTime() + 0.03
+                    local effect = EffectData()
+                    effect:SetOrigin(tr.HitPos)
+                    effect:SetEntity(self.Owner)
+                    effect:SetNormal(tr.HitNormal)
+                    util.Effect("buu_slidedust",effect)
+                end	
+            elseif self.Owner.Sliding && self.Owner.SlideLastVel <= 0 || self.Owner.Sliding && !self.Owner.CanSlide then
+                self.Owner.SlideTime = nil
+                self.Owner.Sliding = false
+                self.Owner.SlideCond1 = false
+            end
+            
+            local tr = util.QuickTrace(self.Owner:GetPos() + Vector(0,0,50) , (self.Owner.SlideLastDir * 50), self.Owner);
+            if tr && tr.Hit && self.Owner.Sliding && self.Owner.SlideCond then
+                self.Owner.SlideTime = nil
+                self.Owner.Sliding = false
+                self.Owner.SlideCond = false
+        
+                self.Owner:SetVelocity(self.Owner:GetAimVector(), 0)
+                if SERVER then
+                    self.Owner:EmitSound("physics/body/body_medium_impact_hard" .. math.random(1, 6) .. ".wav", math.Rand(80, 100), math.Rand(90, 120))
+                end
+                if tr.Entity:IsValid() && GetConVar("sv_buu_slidedamage"):GetInt() == 1 then
+                    tr.Entity:TakeDamage(self.Owner.SlideLastVel / 20, self.Owner)
+                end
+                local shake = ents.Create( "env_shake" )
+                shake:SetOwner(self.Owner)
+                shake:SetPos( tr.HitPos )
+                shake:SetKeyValue( "amplitude", "2500" )
+                shake:SetKeyValue( "radius", "100" )
+                shake:SetKeyValue( "duration", "0.5" )
+                shake:SetKeyValue( "frequency", "255" )
+                shake:SetKeyValue( "spawnflags", "4" )	
+                shake:Spawn()
+                shake:Activate()
+                shake:Fire( "StartShake", "", 0 )
+            end	
+            
+            if self.Owner.LastSlide == nil then
+                self.Owner.LastSlide = false
+            end
+            
+            if self.Owner.LastSlide != self.Owner.Sliding then
+                self.Owner.LastSlide = self.Owner.Sliding
+                net.Start("BuuBaseSendSlideToClient")
+                net.WriteBool(self.Owner.Sliding)
+                net.WriteEntity(self.Owner)
+                net.Broadcast()
+            end
+        end
+    end
 end
 
+function SWEP:HandleMuzzleAttachmentHelper(attachments)
+	for k, v in pairs(attachments) do
+		if v.name == "muzzle" then return v.name end
+		if v.name == "spark" then return v.name end
+		if v.name == "laser" then return v.name end
+		if v.name == "1" then return v.name end
+	end
+	return "nil"
+end
+
+function SWEP:HandleMuzzleAttachmentFlashlight(flashlight, viewmodel)
+	local attachs = viewmodel:GetAttachments()
+	local name = self:HandleMuzzleAttachmentHelper(attachs)
+
+	if not (name == "nil") and viewmodel:GetOwner():Alive() then
+		flashlight:SetParent(viewmodel)
+		flashlight:Fire("SetParentAttachment", tostring(name) )
+	elseif viewmodel:GetOwner():Alive() then
+		flashlight:SetParent(viewmodel)
+		timer.Simple(0, function() 
+            flashlight:SetPos(viewmodel:GetPos()) 
+            flashlight:SetAngles(viewmodel:GetAngles()) 
+            flashlight:SetParent(viewmodel) 
+        end)
+	end
+end
 
 -- Real men code their own SWEP:Reload() (Mine's in think)
 function SWEP:Reload() 
@@ -736,31 +886,54 @@ function SWEP:MagazineDrop()
     end
 end
 
-
 -- This is my super sexy CalcView. Don't touch it
 local myfov = 75
 local myfov_t = 90
-function MySuperSexyCalcView(ply,origin,angles,fov,vm_origin,vm_angles)
-	if ply:GetActiveWeapon() == "weapon_buu_base2" then
+function BuusSuperSexyCalcView(ply,origin,angles,fov,vm_origin,vm_angles)
+    if ply:GetActiveWeapon().IsBuuBase && GetConVar("cl_buu_slidetilt"):GetInt() == 1 then
+        if !ply:Alive() then return end
+
+		local DistIn
+		local DistOut
+		
+		if ply.Sliding == nil or ply.SlideLeanAngle == nil then
+			ply.Sliding = false
+			ply.SlideLeanAngle = 0
+		end
+		
+		if ply.Sliding and ply.SlideLeanAngle < 20 then
+			DistIn = ply.SlideLeanAngle - 20
+			ply.SlideLeanAngle = math.Approach(ply.SlideLeanAngle, 20, FrameTime() * (DistIn * 6))
+		elseif !ply.Sliding and ply.SlideLeanAngle > 0 then 
+			DistOut = ply.SlideLeanAngle - 0
+			ply.SlideLeanAngle = math.Approach(ply.SlideLeanAngle, 0, FrameTime() * (DistOut * 6))
+		end
+	
+		if ply.SlideLeanAngle != 0 then -- no more affect other calc view
+			angles.roll = angles.roll + ply.SlideLeanAngle
+		end
+    end
+	if ply:GetActiveWeapon().IsBuuBase && !ply:GetActiveWeapon().Sniper then
 		local m_PlayerCam = GAMEMODE:CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
 		m_PlayerCam.origin = origin
 		m_PlayerCam.angles = angles
 		m_PlayerCam.fov = myfov
 		myfov = Lerp(10*FrameTime(),myfov,myfov_t)
-		if ply:KeyDown(IN_ATTACK2) then 	
+		if ply:GetActiveWeapon():GetBuu_Ironsights() then 	
 			myfov_t = ply:GetActiveWeapon().IronsightFOV
 		else 
 			myfov_t = LocalPlayer():GetInfoNum("fov_desired",90)
 		end
-		myrecoil = Lerp(6*FrameTime(),myrecoil,0)
-		myrecoilyaw = Lerp(6*FrameTime(),myrecoilyaw,0)
-		e_recoilyaw = Lerp(6*FrameTime(),e_recoilyaw,myrecoilyaw)
+        
+		/*myrecoil = Lerp(20*FrameTime(),myrecoil,0)
+		myrecoilyaw = Lerp(20*FrameTime(),myrecoilyaw,0)
+		e_recoilyaw = Lerp(20*FrameTime(),e_recoilyaw,myrecoilyaw)
 		
-		m_PlayerCam.angles = Angle(angles.p-myrecoil,angles.y-e_recoilyaw ,angles.r)
+		m_PlayerCam.angles = Angle(angles.p-myrecoil,angles.y-e_recoilyaw ,angles.r)*/
 		return m_PlayerCam,GAMEMODE:CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
 	end
 end
-hook.Add( "CalcView", "BuusSuperSexyCalcView", MySuperSexyCalcView )
+hook.Add( "CalcView", "BuusSuperSexyCalcView", BuusSuperSexyCalcView )
 
 -- Makes your gun spit bullets
 function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
@@ -771,7 +944,7 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 	local bullet 	= {}
 	bullet.Num  	= numbul
 	bullet.Src 		= self.Owner:GetShootPos()
-    bullet.Dir 		= (self.Owner:EyeAngles() + self.Owner:GetPunchAngle() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0) * 33):Forward()
+    bullet.Dir 		= (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0) * 33):Forward()
 	bullet.Spread 	= Vector(cone, cone, 0)
 	bullet.Tracer 	= 0
 	bullet.Force 	= 0.5 * dmg
@@ -802,6 +975,7 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
         self:SetBuu_ViewPunch1(math.Rand(-0.5,-2.5))
         self:SetBuu_ViewPunch2(math.Rand(-1,1))
     end
+    
 	if ( (game.SinglePlayer() && SERVER) || ( !game.SinglePlayer() && CLIENT && IsFirstTimePredicted() ) ) then
 	
 		local eyeang = self.Owner:EyeAngles()
@@ -858,25 +1032,79 @@ function SWEP:CSShootBullet(dmg, recoil, numbul, cone)
 end
 
 
--- Not working Laser. For the love of god don't touch this broken piece of shit
-local LASER = Material('sprites/physgbeamb')
-function SWEP:ViewModelDrawn()
-    if self.Laser == true then
-        local vm = self.Owner:GetViewModel()
-		local BoneIndx = vm:LookupBone("ValveBiped.Bip01_R_Hand")
-		local BonePos, BoneAng = vm:GetBonePosition( BoneIndx )
-        local Vec1 = LocalToWorld(Vector(25, -7, -5), BoneAng, BonePos, BoneAng)
+function SWEP:GetBoneOrientation( ent, bonename )
+	
+	local pos, ang
 
-        local m = ClientsideModel("models/Items/AR2_Grenade.mdl", RENDERGROUP_OTHER)
-		m:SetPos(Vec1)
-		m:SetAngles(BoneAng)
-		m:DrawModel()
-		m:Remove()
-		
-		render.SetMaterial(LASER)
-        render.DrawBeam(Vec1, Vec1 + BoneAng:Forward()*100, 1, 0, 1, Color(255,0,0))
+	if (!ent:LookupBone(bonename)) then return nil, nil end
+	
+	local bone = ent:GetBoneMatrix(ent:LookupBone(bonename))
+	if (bone) then
+		pos, ang = bone:GetTranslation(), bone:GetAngles()
+	else
+		pos, ang = Vector(0,0,0), Angle(0,0,0)
+	end
+	
+	return pos, ang
+end
+
+local tr = {}
+local LaserBeam  = Material('effects/buu_laser')
+local LaserPoint = Material('sprites/redglow1')
+local LastLaserPos = Vector(0,0,0)
+local point_pos = Vector(0,0,0)
+function SWEP:ViewModelDrawn(vm)
+    if self.Laser == true || self:GetClass() == "weapon_buu_base2" then
+        local pos, ang = self:GetBoneOrientation( vm, self.LaserBone )
+        local aim = self.Owner:EyeAngles()
+        pos = pos + aim:Right() * self.LaserPos.x + aim:Up() * self.LaserPos.y + aim:Forward() * self.LaserPos.z
+        ang:RotateAroundAxis(ang:Right(), self.LaserAng.p)
+        ang:RotateAroundAxis(ang:Up(), self.LaserAng.y)
+        ang:RotateAroundAxis(ang:Forward(), self.LaserAng.r)
+        ang = ang:Forward()
+        dir = ang
+        
+        tr.start = pos
+        tr.endpos = tr.start + dir * 8192
+        tr.filter = self.Owner
+        
+        trace = util.TraceLine(tr)
+        
+        if util.PointContents(trace.HitPos) != CONTENTS_SOLID then
+            dist = tr.start:Distance(trace.HitPos)
+            
+            render.SetMaterial(LaserBeam)
+            render.DrawBeam(pos + dir, pos + dir * math.Clamp(dist, 0, 75), 0.5, 0, 0.99, Color(255,0,0))
+            
+            if !(dist < 172) && (self:GetBuu_Sprinting() || self:GetBuu_NearWall() || (!self.Owner:IsOnGround() && self.Owner:GetMoveType() != MOVETYPE_NOCLIP) || self.LandTime > RealTime() || self.Owner:GetVelocity():Length() > 30 || self:GetBuu_Reloading()) then
+                point_pos = LerpVector(10*FrameTime(), trace.HitPos, point_pos)
+            elseif dist < 172 then
+                point_pos = LerpVector(1-dist/172, point_pos, trace.HitPos)
+            else
+                point_pos = LerpVector(30*FrameTime(), point_pos, self.Owner:GetEyeTrace().HitPos)
+            end
+            
+            render.DrawBeam(point_pos, LastLaserPos, 3, 0, 1, Color(255, 0, 0, 255))
+            render.SetMaterial(LaserPoint)
+            render.DrawSprite(point_pos, 3, 3, Color(255, 0, 0, 255))
+            
+            LastLaserPos = point_pos
+            
+        end
     end
 end
+
+hook.Add("PostDrawTranslucentRenderables", "DrawPreviewRope", function()
+    for k, v in pairs( player.GetAll() ) do
+        if v:GetActiveWeapon().IsBuuBase && v:GetActiveWeapon().Laser && GetViewEntity() != v then
+            local trace = v:GetEyeTrace()
+            local pos = trace.HitPos
+            local ang = trace.HitNormal:Angle() + Angle(90,0,0)
+            render.SetMaterial(LaserPoint)
+            render.DrawSprite(pos, 6, 6, Color(255, 0, 0, 255))
+        end
+    end
+end)
 
 
 if CLIENT then
@@ -909,7 +1137,7 @@ if CLIENT then
 				  Animation Transition Speed 
 		--------------------------------------------*/
 		
-		if self.LandTime > RealTime() then
+		if self.LandTime > RealTime() && !(self.Owner:KeyDown(IN_SPEED) && self.Owner:IsOnGround()) then
 			TestVector = LerpVector(20*FrameTime(),TestVector,TestVectorTarget) 
             TestVectorAngle = LerpVector(20*FrameTime(),TestVectorAngle,TestVectorAngleTarget)
         elseif IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then
@@ -957,7 +1185,7 @@ if CLIENT then
 				targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) // Parabolas! Thank you https://www.desmos.com for some nice visuals.
 			end
 			TestVectorAngleTarget = self.IronSightsAng + Vector(-targettime/(maxroll/3),0,-targettime)
-        elseif self:GetBuu_Sprinting() && !self:GetBuu_Reloading() == true && !self.Owner:KeyDown(IN_DUCK) && GetConVar("sv_buu_sprinting"):GetInt() == 1 then 
+        elseif self:GetBuu_Sprinting() && !self:GetBuu_Reloading() == true && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner.Sliding && GetConVar("sv_buu_slideshoot"):GetInt() == 0)) && GetConVar("sv_buu_sprinting"):GetInt() == 1 then 
             TestVectorTarget = self.RunArmPos
             TestVectorAngleTarget = self.RunArmAngle
         elseif self:GetBuu_NearWall() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading() == true) then 
@@ -1027,17 +1255,24 @@ if CLIENT then
 		--------------------------------------------*/
 		
         if ply:IsOnGround() && GetConVar("cl_buu_custombob"):GetInt() == 1 then
-			if self:GetBuu_Sprinting() && (!self:GetBuu_Reloading() == true) && GetConVar("sv_buu_sprinting"):GetInt() == 1 then
+			if self:GetBuu_Sprinting() && (!self:GetBuu_Reloading() == true) && GetConVar("sv_buu_sprinting"):GetInt() == 1 && !self.Owner.Sliding then
 				local BreatheTime = RealTime() * 18
 				TestVectorTarget = TestVectorTarget - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400,0,math.cos(BreatheTime)*walkspeed/400)
 				TestVectorAngleTarget = TestVectorAngleTarget - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400,0)
-			elseif walkspeed > 20 && !self:GetBuu_NearWall() then
+			elseif walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner.Sliding then
 				local BreatheTime = RealTime() * 16
 				if self:GetBuu_Ironsights() then
 					TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
 				else
-					TestVectorTarget = TestVectorTarget - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200,0,0)
-					TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200,0)
+                    local roll = 0
+                    local yaw = 0
+                    if self.Owner:KeyDown(IN_MOVERIGHT) then
+                        roll = -7*(walkspeed/self.Owner:GetWalkSpeed())
+                    elseif self.Owner:KeyDown(IN_MOVELEFT) then
+                        yaw = 7*(walkspeed/200)
+                    end
+					TestVectorTarget = TestVectorTarget - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5,0,0)
+					TestVectorAngleTarget = TestVectorAngleTarget - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
 				end
 			elseif !self:GetBuu_Ironsights() then
 				local BreatheTime = RealTime() * 2
@@ -1092,7 +1327,7 @@ function IronIdleMove(cmd)
 	local ply = LocalPlayer()
 	local weapon = ply:GetActiveWeapon()
 	if !IsValid(ply) then return end
-	if IsValid(weapon) && (weapon:GetClass() == "weapon_buu_base2" || weapon.Base == "weapon_buu_base2" || weapon.Base2 == "weapon_buu_base2") && GetConVar("sv_buu_ironsightsway"):GetInt() == 1 then
+	if IsValid(weapon) && weapon.IsBuuBase && GetConVar("sv_buu_ironsightsway"):GetInt() == 1 then
 		local ang = cmd:GetViewAngles()
 
 		if weapon:GetBuu_Ironsights() then
@@ -1117,7 +1352,7 @@ end
 hook.Add ("CreateMove", "BuuIronIdleMove", IronIdleMove)
 
 
--- Had to do this shit to get the slienced muzzleflash thing to work. Pretty annoying because it makes my code larger :/
+-- Custom muzzleflashes
 function SWEP:FireAnimationEvent(pos,ang,event)
 
 	if (event==5001) then 
@@ -1148,9 +1383,14 @@ end
 -- Shotgun reload stuff
 function SWEP:StartMyReload()
 	if !self.Shotgun then return end
+    local anim = ACT_SHOTGUN_RELOAD_START
+    self.Weapon:SendWeaponAnim(anim)
+    if CLIENT then return end
+    net.Start("BuuBaseSendReloadToClient")
+    net.WriteInt(anim, 32)
+    net.Send(self.Owner)
     self:SetBuu_Reloading(true)
     self:SetBuu_CanCancelReloading(false)
-    self.Weapon:SendWeaponAnim(ACT_SHOTGUN_RELOAD_START)
     self:SetBuu_StartShotgunReload(CurTime() + self.Owner:GetViewModel():SequenceDuration())
 end
 
@@ -1340,9 +1580,12 @@ if CLIENT then
     end
 end
 
+-- Everything from here is hooks/Net messages
+
+-- Headshot damage hooks
 hook.Add( "ScalePlayerDamage", "BuuBaseScalePlayerDamage", function( ply, hitgroup, dmginfo )
 	if !dmginfo:GetInflictor():IsPlayer() || !IsValid(dmginfo:GetInflictor():GetActiveWeapon()) || dmginfo:GetInflictor():GetActiveWeapon():GetClass() == nil then return end
-	if !(GetConVar("sv_buu_headshotinstantkill"):GetInt() == 1 && (dmginfo:GetInflictor():GetActiveWeapon():GetClass() == "weapon_buu_base2" || dmginfo:GetInflictor():GetActiveWeapon().Base == "weapon_buu_base2")) then return end
+	if !(GetConVar("sv_buu_headshotinstantkill"):GetInt() == 1 && (dmginfo:GetInflictor():GetActiveWeapon().IsBuuBase || dmginfo:GetInflictor():GetActiveWeapon().IsBuuBase)) then return end
 	if ( hitgroup == HITGROUP_HEAD ) && GetConVar("sv_buu_headshotinstantkill"):GetInt() == 1 && IsValid(ply) && SERVER then
 		ply:TakeDamage( ply:Health(), dmginfo:GetAttacker(), dmginfo:GetInflictor() )
  	else
@@ -1352,7 +1595,7 @@ end)
 
 hook.Add( "ScaleNPCDamage", "BuuBaseScaleNPCDamage", function( ent, hitgroup, dmginfo )
 	if !dmginfo:GetInflictor():IsPlayer() ||!IsValid(dmginfo:GetInflictor():GetActiveWeapon()) || dmginfo:GetInflictor():GetActiveWeapon():GetClass() == nil then return end
-	if !(GetConVar("sv_buu_headshotinstantkill"):GetInt() == 1 && (dmginfo:GetInflictor():GetActiveWeapon():GetClass() == "weapon_buu_base2" || dmginfo:GetInflictor():GetActiveWeapon().Base == "weapon_buu_base2")) then return end
+	if !(GetConVar("sv_buu_headshotinstantkill"):GetInt() == 1 && (dmginfo:GetInflictor():GetActiveWeapon().IsBuuBase || dmginfo:GetInflictor():GetActiveWeapon().IsBuuBase)) then return end
 	if ( hitgroup == HITGROUP_HEAD ) && IsValid(ent) && SERVER then
 		ent:TakeDamage( ent:Health(), dmginfo:GetAttacker(), dmginfo:GetInflictor() )
  	else
@@ -1360,28 +1603,139 @@ hook.Add( "ScaleNPCDamage", "BuuBaseScaleNPCDamage", function( ent, hitgroup, dm
 	end
 end)
 
+-- Hide HL2 crosshair if not using that crosshair setting
 hook.Add( "HUDShouldDraw", "HideHUDBuuBase2", function( name )
 	local ply = LocalPlayer()
 	if !IsValid(ply) then return end
 	local weapon = ply:GetActiveWeapon()
-	if IsValid(weapon) && (weapon:GetClass() == "weapon_buu_base2" || weapon.Base == "weapon_buu_base2") && (GetConVar("sv_buu_crosshair"):GetInt() == 0 || GetConVar("cl_buu_crosshairstyle"):GetInt() != 1) then
+	if IsValid(weapon) && weapon.IsBuuBase && (GetConVar("sv_buu_crosshair"):GetInt() == 0 || GetConVar("cl_buu_crosshairstyle"):GetInt() != 1) then
 		if name == "CHudCrosshair" then return false end
 	end
 end)
 
-hook.Add( "PlayerSwitchFlashlight", "FlashlightBuu", function( ply, enabled )
+-- Custom flashlight positioning hooks
+
+hook.Add( "PlayerSwitchFlashlight", "FlashlightBuuToggle", function( ply, enabled )
 	if !IsValid(ply) || !IsValid(ply:GetActiveWeapon()) || ply:GetActiveWeapon():GetClass() == nil then return end
-	if GetConVar("cl_buu_customflashlight"):GetInt() == 1 && (ply:GetActiveWeapon():GetClass() == "weapon_buu_base2" || ply:GetActiveWeapon().Base == "weapon_buu_base2") then
+    if GetConVar("cl_buu_customflashlight"):GetInt() == 0 then return end
+    if ply.SwitchingFromBuu then
+        ply.SwitchingFromBuu = false
+        if IsValid(ply.flashlight) then
+            ply.flashlight:Remove()
+        end
+    elseif ply:GetActiveWeapon().IsBuuBase || ply.SwitchingToBuu then
 		ply:SetNWBool("BuuBase_Flashlight", !ply:GetNWBool("BuuBase_Flashlight", false))
 		ply:EmitSound("items/flashlight1.wav")
-		return false
-	else
-		if ply:CanUseFlashlight() then
-			return true
-		else
-			return false
-		end
+        local self = ply
+        timer.Simple(0, function() 
+            if ply:GetNWBool("BuuBase_Flashlight") then
+                self.flashlight = ents.Create( "env_projectedtexture" )
+        
+                self.flashlight:SetKeyValue( "enableshadows", 1 )
+                self.flashlight:SetKeyValue( "nearz", 1 )
+                self.flashlight:SetKeyValue( "lightfov", math.Clamp( 50, 10, 170 ) ) 
+                
+                local dist = 712
+                if ( !game.SinglePlayer() ) then dist = math.Clamp( dist, 64, 2048 ) end
+                self.flashlight:SetKeyValue( "farz", dist )
+
+                local c = Color(255,255,255,255)
+                local b = 1
+                if ( !game.SinglePlayer() ) then b = math.Clamp( b, 0, 8 ) end
+                self.flashlight:SetKeyValue( "lightcolor", Format( "%i %i %i 255", c.r * b, c.g * b, c.b * b ) )
+
+                self.flashlight:SetParent( self:GetViewModel() )
+                
+                self:GetActiveWeapon():HandleMuzzleAttachmentFlashlight(self.flashlight, self:GetViewModel())
+                
+                self.flashlight:Spawn()
+            elseif !ply:GetNWBool("BuuBase_Flashlight") && IsValid(ply.flashlight) then
+                ply.flashlight:Remove()
+            end
+        end)
+        if ply:FlashlightIsOn() && ply.SwitchingToBuu then
+            ply.SwitchingToBuu = false
+            return true
+        else
+            return false
+        end
+    end
+end)
+
+hook.Add("PlayerSpawn", "FlashlightBuuSpawn",  function(ply)
+	ply:SetNWBool("BuuBase_Flashlight", false)
+    ply.flashlight = nil
+    ply.Sliding = false
+end)
+
+-- Flashlight hooks
+hook.Add("PlayerSwitchWeapon", "FlashlightBuuSwitchWeapon", function(ply, old, new)
+    if !IsValid(ply) || !IsValid(ply:GetActiveWeapon()) || ply:GetActiveWeapon():GetClass() == nil then return end
+    if GetConVar("cl_buu_customflashlight"):GetInt() == 0 then return end
+    if SERVER then
+        if !old.IsBuuBase && new.IsBuuBase && ply:FlashlightIsOn() then
+            ply.SwitchingToBuu = true
+            ply:Flashlight(false)
+            ply:SetNWBool("BuuBase_Flashlight", true)
+        elseif !new.IsBuuBase && old.IsBuuBase && ply:GetNWBool("BuuBase_Flashlight", false) then
+            ply.SwitchingFromBuu = true
+            ply:Flashlight(true)
+            ply:SetNWBool("BuuBase_Flashlight", false)     
+        end
+    end
+end)
+
+if SERVER then
+    util.AddNetworkString( "BuuBaseSendReloadToClient" )
+    util.AddNetworkString( "BuuBaseSendSlideToClient" )
+end
+
+-- Sliding hooks
+
+if CLIENT then
+
+    net.Receive( "BuuBaseSendReloadToClient", function(len, ply)
+        local anim = net.ReadInt(32)
+        if IsValid(ply) then 
+            ply:GetActiveWeapon():SendWeaponAnim(anim)
+        end
+    end)
+    
+    net.Receive( "BuuBaseSendSlideToClient", function()
+        local receive = net.ReadBool()
+        local ply = net.ReadEntity()
+        if IsValid(ply) && ply:Health() > 0 then 
+            ply.Sliding = receive
+        end
+    end)
+
+end
+
+hook.Add("CalcMainActivity", "BuuBaseSlidingAnimation", function(ply, velocity)
+
+	if IsValid(ply) && ply.Sliding then
+		ply.CalcIdeal = ACT_MP_WALK
+		ply.CalcSeqOverride = -1
+        ply.CalcSeqOverride = ply:LookupSequence( "zombie_slump_idle_02" )
+		return ply.CalcIdeal, ply.CalcSeqOverride
 	end
+    
+end)
+
+    
+hook.Add("RenderScreenspaceEffects", "BuuBaseSlidingSound", function()
+    local ply = LocalPlayer()
+    if ply.Sliding then
+        if !SlideSound then
+            SlideSound = CreateSound(ply, "physics/flesh/flesh_scrape_rough_loop.wav")
+            SlideSound:Play()
+        end			
+    else
+        if SlideSound then
+            SlideSound:Stop()
+            SlideSound = nil
+        end	
+    end
 end)
 
 -- Dumbledore kills Snape

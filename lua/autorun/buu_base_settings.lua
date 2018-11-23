@@ -27,7 +27,8 @@ if CLIENT then
 				cl_buu_customflashlight = "1",
 				cl_buu_ironsensitivity = "0.7",
 				cl_buu_scopesensitivity = "0.3",
-				cl_buu_lowammowarn = "1"
+				cl_buu_lowammowarn = "1",
+                cl_buu_slidetilt = "1"
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -133,6 +134,11 @@ if CLIENT then
 				Label = "Guns click on low ammo",
 				Command = "cl_buu_lowammowarn",
 			})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Tilt screen when sliding",
+				Command = "cl_buu_slidetilt",
+			})
 			
 			panel:AddControl("Label", {Text = ""})
 			panel:AddControl("Label", {Text = "By buu342"})
@@ -159,7 +165,10 @@ if CLIENT then
 				sv_buu_shotgunwreckdoors = "1",
 				sv_buu_sniperbreath = "1",
 				sv_buu_magdrop = "1",
-				sv_buu_magdroplifetime = "10"
+				sv_buu_magdroplifetime = "10",
+                sv_buu_canslide = "1",
+                sv_buu_slidedamage = "1",
+                sv_buu_slideshoot = "1",
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -221,6 +230,21 @@ if CLIENT then
 				Type 		= "Integer",
 				Min 		= "1",
 				Max 		= "10000",
+			})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Allow sliding",
+				Command = "sv_buu_canslide",
+			})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Sliding damage",
+				Command = "sv_buu_slidedamage",
+			})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Shoot while Sliding",
+				Command = "sv_buu_slideshoot",
 			})
 			
 			panel:AddControl("Label", {Text = ""})
@@ -297,6 +321,10 @@ if !ConVarExists("cl_buu_lowammowarn") then
     CreateClientConVar("cl_buu_lowammowarn", '255', FCVAR_ARCHIVE)
 end
 
+if !ConVarExists("cl_buu_slidetilt") then
+    CreateClientConVar("cl_buu_slidetilt", '1', FCVAR_ARCHIVE)
+end
+
 
 /*===============================================================
 							Serverside
@@ -340,4 +368,16 @@ end
 
 if !ConVarExists("sv_buu_magdroplifetime") then
     CreateConVar("sv_buu_magdroplifetime", '10', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+end
+
+if !ConVarExists("sv_buu_canslide") then
+    CreateConVar("sv_buu_canslide", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+end
+
+if !ConVarExists("sv_buu_slidedamage") then
+    CreateConVar("sv_buu_slidedamage", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+end
+
+if !ConVarExists("sv_buu_slideshoot") then
+    CreateConVar("sv_buu_slideshoot", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
 end
