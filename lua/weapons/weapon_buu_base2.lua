@@ -1055,9 +1055,14 @@ local LastLaserPos = Vector(0,0,0)
 local point_pos = Vector(0,0,0)
 function SWEP:ViewModelDrawn(vm)
     if self.Laser == true || self:GetClass() == "weapon_buu_base2" then
+        if self:GetClass() == "weapon_buu_base2" then
+            self.LaserBone = "ValveBiped.base"
+            self.LaserPos = Vector(0,13,0)
+            self.LaserAng = Angle(90,0,0)
+        end
         local pos, ang = self:GetBoneOrientation( vm, self.LaserBone )
         local aim = self.Owner:EyeAngles()
-        pos = pos + aim:Right() * self.LaserPos.x + aim:Up() * self.LaserPos.y + aim:Forward() * self.LaserPos.z
+        pos = pos + ang:Right() * self.LaserPos.x + ang:Up() * self.LaserPos.y + ang:Forward() * self.LaserPos.z
         ang:RotateAroundAxis(ang:Right(), self.LaserAng.p)
         ang:RotateAroundAxis(ang:Up(), self.LaserAng.y)
         ang:RotateAroundAxis(ang:Forward(), self.LaserAng.r)
