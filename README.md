@@ -1,9 +1,9 @@
 # Buu342's Weapon Base 2
-This is a complete remake of my original weapon base.</br>
-The original was buggy, contained code from a myriad of sources, and in general was a mess to maintain. I've been trying to refurbish it for quite some time, with this version being the final one that I'm happy to release to the wild.</br>
+This is a complete remake of my original weapon base.</br></br>
+The original was buggy, contained code from a myriad of sources, and in general was a mess to maintain. I've been trying to refurbish it for quite some time, with this version being the final one that I'm happy to release to the wild.</br></br>
 I've done the best I could to keep the code as clean as possible, commenting whenever I could. This should hopefully contain a lot of cool stuff for people to learn from!</br></br>
 
-###Features
+### Features
 * Fully commented source code
 * Fully predicted, so that laggy clients have the best experience
 * Super customizable and easy to edit
@@ -20,8 +20,8 @@ I've done the best I could to keep the code as clean as possible, commenting whe
 * Firemode switching with E+Mouse1
 * Burst fire
 * Tactical Sliding
-* Laser Pointer
-* Flashlight that follows the gun
+* Laser Pointer (Also in thirdperson)
+* Flashlight that follows the gun (Also in thirdperson)
 * Idle, holster, ironsight, and empty animation support
 * Lua based animations, including breathing, idle, bobbing, swaying, crouching, and jumping
 * Ammo being given during animation, instead of at the end
