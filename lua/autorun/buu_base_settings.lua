@@ -2,7 +2,7 @@ if CLIENT then
 
 	hook.Add("PopulateToolMenu", "BuuBaseSettings", function()
 	
-		spawnmenu.AddToolMenuOption("Options", "Buu Base Settings", "Client", "Client", "", "", function(panel)
+		spawnmenu.AddToolMenuOption("Options", "Buu Base Settings", "BuuBaseSettings_Client", "Client", "", "", function(panel)
 
 			local BuuBaseSettings = {
 				Options = {}, 
@@ -24,11 +24,13 @@ if CLIENT then
 				cl_buu_customjump =	"1",
 				cl_buu_custombob =	"1",
 				cl_buu_customsway =	"1",
-				cl_buu_customflashlight = "1",
+				cl_buu_magdrop = "1",
+				cl_buu_magdroplifetime = "10",
 				cl_buu_ironsensitivity = "0.7",
 				cl_buu_scopesensitivity = "0.3",
 				cl_buu_lowammowarn = "1",
-                cl_buu_slidetilt = "1"
+                cl_buu_slidetilt = "1",
+                cl_buu_thirdpersonlaser = "1"
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -104,12 +106,25 @@ if CLIENT then
 				Label = "Custom Sway",
 				Command = "cl_buu_customsway",
 			})
-			
-			panel:AddControl("CheckBox", {
-				Label = "Custom Flashlight",
-				Command = "cl_buu_customflashlight",
+            
+            panel:AddControl("CheckBox", {
+				Label = "Thirdperson Lasers",
+				Command = "cl_buu_thirdpersonlaser",
 			})
-			
+        
+            panel:AddControl("CheckBox", {
+				Label = "Mag dropping",
+				Command = "cl_buu_magdrop",
+			})
+            
+            panel:AddControl("Slider", {
+				Label 	= "Dropped mags lifetime",
+				Command 	= "cl_buu_magdroplifetime",
+				Type 		= "Integer",
+				Min 		= "1",
+				Max 		= "10000",
+			})
+            
 			panel:AddControl("Label", {Text = ""})
 			
 			panel:AddControl("Slider", {
@@ -145,7 +160,7 @@ if CLIENT then
 			
 		end)
 	
-		spawnmenu.AddToolMenuOption("Options", "Buu Base Settings", "Server", "Server", "", "", function(panel)
+		spawnmenu.AddToolMenuOption("Options", "Buu Base Settings", "BuuBaseSettings_Server", "Server", "", "", function(panel)
 
 			local BuuBaseSettings = {
 				Options = {}, 
@@ -160,15 +175,14 @@ if CLIENT then
 				sv_buu_crosshair = "1",
 				sv_buu_sprinting = "1",
 				sv_buu_nearwall = "1",
-				sv_buu_headshotinstantkill = "0",
+				sv_buu_ladder = "1",
 				sv_buu_ironsightsway = "1",
 				sv_buu_shotgunwreckdoors = "1",
 				sv_buu_sniperbreath = "1",
-				sv_buu_magdrop = "1",
-				sv_buu_magdroplifetime = "10",
                 sv_buu_canslide = "1",
                 sv_buu_slidedamage = "1",
                 sv_buu_slideshoot = "1",
+				sv_buu_customflashlight = "1",
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -192,12 +206,15 @@ if CLIENT then
 				Label = "Enable near-wall",
 				Command = "sv_buu_nearwall",
 			})
-			
-			panel:AddControl("Label", {Text = ""})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Disable shooting while on ladder",
+				Command = "sv_buu_ladder",
+			})
 			
 			panel:AddControl("CheckBox", {
-				Label = "Headshots instant kill",
-				Command = "sv_buu_headshotinstantkill",
+				Label = "Custom Flashlight",
+				Command = "sv_buu_customflashlight",
 			})
 			
 			panel:AddControl("Label", {Text = ""})
@@ -218,19 +235,6 @@ if CLIENT then
 			})
 			
 			panel:AddControl("Label", {Text = ""})
-
-			panel:AddControl("CheckBox", {
-				Label = "Mag dropping",
-				Command = "sv_buu_magdrop",
-			})
-			
-			panel:AddControl("Slider", {
-				Label 	= "Dropped mags lifetime",
-				Command 	= "sv_buu_magdroplifetime",
-				Type 		= "Integer",
-				Min 		= "1",
-				Max 		= "10000",
-			})
             
             panel:AddControl("CheckBox", {
 				Label = "Allow sliding",
@@ -305,10 +309,6 @@ if !ConVarExists("cl_buu_customsway") then
     CreateClientConVar("cl_buu_customsway", '1', FCVAR_ARCHIVE)
 end
 
-if !ConVarExists("cl_buu_customflashlight") then
-    CreateClientConVar("cl_buu_customflashlight", '1', FCVAR_ARCHIVE)
-end
-
 if !ConVarExists("cl_buu_ironsensitivity") then
     CreateClientConVar("cl_buu_ironsensitivity", '0.7', FCVAR_ARCHIVE)
 end
@@ -325,6 +325,17 @@ if !ConVarExists("cl_buu_slidetilt") then
     CreateClientConVar("cl_buu_slidetilt", '1', FCVAR_ARCHIVE)
 end
 
+if !ConVarExists("cl_buu_thirdpersonlaser") then
+    CreateClientConVar("cl_buu_thirdpersonlaser", '1', FCVAR_ARCHIVE)
+end
+
+if !ConVarExists("cl_buu_magdrop") then
+    CreateClientConVar("cl_buu_magdrop", '1', FCVAR_ARCHIVE)
+end
+
+if !ConVarExists("cl_buu_magdroplifetime") then
+    CreateClientConVar("cl_buu_magdroplifetime", '10', FCVAR_ARCHIVE)
+end
 
 /*===============================================================
 							Serverside
@@ -346,8 +357,8 @@ if !ConVarExists("sv_buu_nearwall") then
     CreateConVar("sv_buu_nearwall", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
 end
 
-if !ConVarExists("sv_buu_headshotinstantkill") then
-    CreateConVar("sv_buu_headshotinstantkill", '0', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+if !ConVarExists("sv_buu_ladder") then
+    CreateConVar("sv_buu_ladder", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
 end
 
 if !ConVarExists("sv_buu_ironsightsway") then
@@ -362,14 +373,6 @@ if !ConVarExists("sv_buu_sniperbreath") then
     CreateConVar("sv_buu_sniperbreath", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
 end
 
-if !ConVarExists("sv_buu_magdrop") then
-    CreateConVar("sv_buu_magdrop", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
-end
-
-if !ConVarExists("sv_buu_magdroplifetime") then
-    CreateConVar("sv_buu_magdroplifetime", '10', FCVAR_ARCHIVE + FCVAR_NOTIFY)
-end
-
 if !ConVarExists("sv_buu_canslide") then
     CreateConVar("sv_buu_canslide", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
 end
@@ -380,4 +383,8 @@ end
 
 if !ConVarExists("sv_buu_slideshoot") then
     CreateConVar("sv_buu_slideshoot", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+end
+
+if !ConVarExists("sv_buu_customflashlight") then
+    CreateClientConVar("sv_buu_customflashlight", '1', FCVAR_ARCHIVE)
 end
