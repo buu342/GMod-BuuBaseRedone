@@ -8,7 +8,7 @@ Sadly, my old sweps broke as a result, so those need to be fixed
 - If you came here to borrow code for your weapon of mass destruction, feel free to do so but please leave Portugal intact, I like it here
 - If you came here for any other reason, sorry I ignored you :((
 Have fun!
-If you need anything, I'm always reachable :)
+If you need anything, I'm always reachable ^^
 https://github.com/buu342/GMod-BuuBaseRedone
 **************************************************************/
 
@@ -63,13 +63,19 @@ SWEP.Secondary.Ammo        = "none"
                    Custom settings start here
 =============================================================*/
 
-SWEP.HoldType         = "pistol"                    // "pistol", "revolver", "smg", "rifle", or "shotgun"
-SWEP.CrosshairType    = 1                           // None (0), Normal (1), Sniper (2), Shotgun (3)
-SWEP.EmptySound       = Sound("buu/base/empty.wav") // Empty firing sound
-SWEP.MuzzleEffect     = "buu_muzzle"                // Muzzleflash
-SWEP.MuzzleEffectS    = "buu_muzzle_silenced"       // Silenced muzzleflash
-SWEP.CanSlide         = true                        // Allow sliding
-SWEP.CustomFlashlight = true                        // Use custom flashlight
+SWEP.HoldType      = "pistol"                    // "pistol", "revolver", "smg", "rifle", or "shotgun"
+SWEP.CrosshairType = 1                           // None (0), Normal (1), Sniper (2), Shotgun (3)
+SWEP.EmptySound    = Sound("buu/base/empty.wav") // Empty firing sound
+SWEP.MuzzleEffect  = "buu_muzzle"                // Muzzleflash
+SWEP.MuzzleEffectS = "buu_muzzle_silenced"       // Silenced muzzleflash
+
+SWEP.CanIronsight     = true // Allow using ironsights? (Not needed for snipers)
+SWEP.CanSprint        = true // Allow sprinting to holster the weapon?
+SWEP.CanNearWall      = true // Allow being near a wall to holster the weapon?
+SWEP.CanLadder        = true // Allow being on a ladder causing the weapon to holster?
+SWEP.CanSlide         = true // Allow sliding
+SWEP.CanSmoke         = true // Allow smoke trail if firing for very long
+SWEP.CustomFlashlight = true // Use custom flashlight
 
 
 /*================= Extra Shooting Settings =================*/
@@ -905,7 +911,7 @@ function SWEP:HandleIronsights()
             self:SetBuu_TimeToScope(CurTime()+0.15)
             
             // Allow ironsights if they're enabled serverside, or if a sniper is being used
-			if (GetConVar("sv_buu_ironsights"):GetBool() || self.Sniper) then
+			if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
 				self:SetBuu_Ironsights(true)
             
                 // Play the ironsight sound
@@ -925,7 +931,7 @@ function SWEP:HandleIronsights()
 			self:SetBuu_Ironsights(false)
             
             // Play the ironsight sound
-			if (GetConVar("sv_buu_ironsights"):GetBool() || self.Sniper) then
+			if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
                 if (ironsounds[self.IronsightSound] != nil) then
                     self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1,5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
@@ -960,7 +966,7 @@ end
 function SWEP:HandleSprinting()
 
     // Check if we're allowed to enter the sprint state
-    if (GetConVar("sv_buu_sprinting"):GetBool() || self.Owner:GetNWBool("Buu_Sliding")) then
+    if ((GetConVar("sv_buu_sprinting"):GetBool() && self.CanSprint) || self.Owner:GetNWBool("Buu_Sliding")) then
         local issprinting = false
         
         // Check they're running AND if they're holding down a movement key
@@ -985,7 +991,7 @@ end
 function SWEP:HandleNearWall()
 
     // Check if we're allowed to enter the nearwall state
-    if (GetConVar("sv_buu_nearwall"):GetBool() && self.Owner:IsPlayer()) then
+    if (GetConVar("sv_buu_nearwall"):GetBool() && self.CanNearWall && self.Owner:IsPlayer()) then
     
         // Enable lag compensation to prevent jitter due to player movement
         self.Owner:LagCompensation(true)
@@ -1013,7 +1019,7 @@ end
 function SWEP:HandleLadder()
 
     // Check if we're allowed to enter the ladder state
-    if (GetConVar("sv_buu_ladder"):GetBool()) then
+    if (GetConVar("sv_buu_ladder"):GetBool() && self.CanLadder) then
     
         // Check if the player is on a ladder
         if (self.Owner:GetMoveType() == MOVETYPE_LADDER) then
@@ -1211,7 +1217,7 @@ end
 -----------------------------*/
 
 function SWEP:HandleBarrelSmoke()
-    if (GetConVar("cl_buu_barrelsmoke"):GetBool() && SERVER || IsFirstTimePredicted()) then
+    if (GetConVar("cl_buu_barrelsmoke"):GetBool() && self.CanSmoke && (SERVER || IsFirstTimePredicted())) then
     
         // Initialize the variables if they aren't already
 		if (self.Smoke == nil) then
