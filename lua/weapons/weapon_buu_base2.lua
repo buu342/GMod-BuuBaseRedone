@@ -556,7 +556,7 @@ function SWEP:PrimaryAttack()
     
     // Do animations
     local anim = mode.Anim
-    if (self:Clip1() <= 0 && (mode.AnimEmpty != nil || mode.AnimIronEmpty != nil)) then
+    if (self:Clip1()-1 <= 0 && (mode.AnimEmpty != nil || mode.AnimIronEmpty != nil)) then
         if (self:GetBuu_Ironsights() && !self.UseNormalShootIron && mode.AnimIronEmpty != nil) then
             anim = mode.AnimIronEmpty
         elseif (mode.AnimEmpty != nil) then
