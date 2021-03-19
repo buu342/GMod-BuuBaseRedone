@@ -130,8 +130,8 @@ SWEP.UseNormalShootIron = true
 -- If above is false, it will use this as the animation. Just give it the 
 -- same value as your Ironsights but with the Y pushed back a bit to simulate
 -- the gun going back when you shoot.
-SWEP.IronSightsShootPos = SWEP.IronSightsPos 
-SWEP.IronSightsShootAng = SWEP.IronSightsAng
+SWEP.IronSightsShootPos = nil 
+SWEP.IronSightsShootAng = nil
 
 
 /*====================== Reload Timers ======================*/
@@ -1765,7 +1765,7 @@ if (CLIENT) then
             end
         
             -- If we just fired, handle ironsight shooting animations
-            if (ironfiretime > CurTime() && !self.UseNormalShootIron) then
+            if (ironfiretime > CurTime() && !self.UseNormalShootIron && self.IronSightsShootPos != nil) then
                 TargetVector = self.IronSightsPos + (self.IronSightsShootPos-self.IronSightsPos)
             else
                 TargetVector = self.IronSightsPos
