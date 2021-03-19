@@ -160,8 +160,8 @@ SWEP.LaserAng  = Angle(0,0,0)              // What angle to translate the laser
 SWEP.Sniper          = false            // Enable sniper scope?
 SWEP.AutoSniper      = false            // Enable to disable leaving the scope after firing
 SWEP.AllowBreath     = true             // Allow pressing ALT to hold breath (which stabilises the scope)
-SWEP.SniperZoom 	 = 30               // How much FOV zoom
-SWEP.ScopeScale 	 = 0.5              // How much percent of the screen does the sniper scope take up
+SWEP.SniperZoom      = 30               // How much FOV zoom
+SWEP.ScopeScale      = 0.5              // How much percent of the screen does the sniper scope take up
 SWEP.SniperTexture   = "scope/fc3Scope" // Scope texture
 
 
@@ -223,8 +223,8 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Float", 13, "Buu_FireTime")        // Stores the time the player last fired
     self:NetworkVar("Float", 14, "Buu_TimeToScope")     // Predicted timer for going to sniper scope
     self:NetworkVar("Float", 15, "Buu_MagDropTime")     // Predicted timer for magazine dropping
-	self:NetworkVar("Float", 16, "Buu_ScopeBreathe")    // Predicted timer for scope breathing
-	self:NetworkVar("Float", 17, "Buu_StateTimer")      // Multi-use predicted timer
+    self:NetworkVar("Float", 16, "Buu_ScopeBreathe")    // Predicted timer for scope breathing
+    self:NetworkVar("Float", 17, "Buu_StateTimer")      // Multi-use predicted timer
     self:NetworkVar("Int",   10, "Buu_BurstCount")      // Burst fire count
     self:NetworkVar("Int",   11, "Buu_SpecialState")    // Special state for stuff. 1,2,3 used for shotgun reload, -1 for holster
     self:NetworkVar("Int",   12, "Buu_FireMode")        // Weapon firing mode (0 = self.Primary, 1 = self.Secondary)
@@ -314,52 +314,52 @@ function SWEP:Initialize()
     
     // Initialize clientside variables
     if (CLIENT) then
-		self.JumpTime = 0
-		self.LandTime = 0
+        self.JumpTime = 0
+        self.LandTime = 0
         
-		// We need to get these so we can scale everything to the player's current resolution.
-		local iScreenWidth = surface.ScreenWidth()
-		local iScreenHeight = surface.ScreenHeight()
-		
-		// Helper table for drawing the scope
-		local ScopeTable = {}
-		ScopeTable.l = iScreenHeight*self.ScopeScale
-		ScopeTable.x1 = 0.5*(iScreenWidth + ScopeTable.l)
-		ScopeTable.y1 = 0.5*(iScreenHeight - ScopeTable.l)
-		ScopeTable.x2 = ScopeTable.x1
-		ScopeTable.y2 = 0.5*(iScreenHeight + ScopeTable.l)
-		ScopeTable.x3 = 0.5*(iScreenWidth - ScopeTable.l)
-		ScopeTable.y3 = ScopeTable.y2
-		ScopeTable.x4 = ScopeTable.x3
-		ScopeTable.y4 = ScopeTable.y1
-		ScopeTable.l = (iScreenHeight + 1)*self.ScopeScale
+        // We need to get these so we can scale everything to the player's current resolution.
+        local iScreenWidth = surface.ScreenWidth()
+        local iScreenHeight = surface.ScreenHeight()
+        
+        // Helper table for drawing the scope
+        local ScopeTable = {}
+        ScopeTable.l = iScreenHeight*self.ScopeScale
+        ScopeTable.x1 = 0.5*(iScreenWidth + ScopeTable.l)
+        ScopeTable.y1 = 0.5*(iScreenHeight - ScopeTable.l)
+        ScopeTable.x2 = ScopeTable.x1
+        ScopeTable.y2 = 0.5*(iScreenHeight + ScopeTable.l)
+        ScopeTable.x3 = 0.5*(iScreenWidth - ScopeTable.l)
+        ScopeTable.y3 = ScopeTable.y2
+        ScopeTable.x4 = ScopeTable.x3
+        ScopeTable.y4 = ScopeTable.y1
+        ScopeTable.l = (iScreenHeight + 1)*self.ScopeScale
         
         // This is for drawing the black bars that surround the scope
-		self.QuadTable = {}
-		self.QuadTable.x1 = 0
-		self.QuadTable.y1 = 0
-		self.QuadTable.w1 = iScreenWidth
-		self.QuadTable.h1 = 0.5*iScreenHeight - ScopeTable.l
-		self.QuadTable.x2 = 0
-		self.QuadTable.y2 = 0.5*iScreenHeight + ScopeTable.l
-		self.QuadTable.w2 = self.QuadTable.w1
-		self.QuadTable.h2 = self.QuadTable.h1
-		self.QuadTable.x3 = 0
-		self.QuadTable.y3 = 0
-		self.QuadTable.w3 = 0.5*iScreenWidth - ScopeTable.l
-		self.QuadTable.h3 = iScreenHeight
-		self.QuadTable.x4 = 0.5*iScreenWidth + ScopeTable.l
-		self.QuadTable.y4 = 0
-		self.QuadTable.w4 = self.QuadTable.w3
-		self.QuadTable.h4 = self.QuadTable.h3
-
+        self.QuadTable = {}
+        self.QuadTable.x1 = 0
+        self.QuadTable.y1 = 0
+        self.QuadTable.w1 = iScreenWidth
+        self.QuadTable.h1 = 0.5*iScreenHeight - ScopeTable.l
+        self.QuadTable.x2 = 0
+        self.QuadTable.y2 = 0.5*iScreenHeight + ScopeTable.l
+        self.QuadTable.w2 = self.QuadTable.w1
+        self.QuadTable.h2 = self.QuadTable.h1
+        self.QuadTable.x3 = 0
+        self.QuadTable.y3 = 0
+        self.QuadTable.w3 = 0.5*iScreenWidth - ScopeTable.l
+        self.QuadTable.h3 = iScreenHeight
+        self.QuadTable.x4 = 0.5*iScreenWidth + ScopeTable.l
+        self.QuadTable.y4 = 0
+        self.QuadTable.w4 = self.QuadTable.w3
+        self.QuadTable.h4 = self.QuadTable.h3
+        
         // The actual scope texture
-		self.LensTable = {}
-		self.LensTable.x = self.QuadTable.w3
-		self.LensTable.y = self.QuadTable.h1
-		self.LensTable.w = 2*ScopeTable.l
-		self.LensTable.h = 2*ScopeTable.l
-	end
+        self.LensTable = {}
+        self.LensTable.x = self.QuadTable.w3
+        self.LensTable.y = self.QuadTable.h1
+        self.LensTable.w = 2*ScopeTable.l
+        self.LensTable.h = 2*ScopeTable.l
+    end
 end
 
 
@@ -388,7 +388,7 @@ function SWEP:Deploy()
     
     // Play the animation and disable shooting for its duration
     self:SendWeaponAnim(anim)
-	self:SetNextPrimaryFire(time)
+    self:SetNextPrimaryFire(time)
     
     // Create the flashlight if needed
     if (SERVER && GetConVar("sv_buu_customflashlight"):GetBool() && self.Owner:FlashlightIsOn() && self.Owner:GetActiveWeapon().CustomFlashlight) then
@@ -574,7 +574,7 @@ function SWEP:PrimaryAttack()
     // Play the shooting animation
     self:SendWeaponAnim(anim)
     self.Owner:MuzzleFlash()
-	self.Owner:SetAnimation(PLAYER_ATTACK1)
+    self.Owner:SetAnimation(PLAYER_ATTACK1)
     
     // Handle shooting sound channel
     if (self.ShootChannel == nil) then
@@ -787,21 +787,21 @@ function SWEP:Think()
     end
         
     // Handle barrel Smoke
-	self:HandleBarrelSmoke()
+    self:HandleBarrelSmoke()
               
     // Handle HL2 weapon bobbing
-	if (GetConVar("cl_buu_custombob"):GetBool()) then
-		self.BobScale = 0
-	else
-		self.BobScale = 1
-	end
-	
-    // Handle HL2 weapon swaying
-	if (GetConVar("cl_buu_customsway"):GetBool()) then
-		self.SwayScale = 0
-	else
-		self.SwayScale = 1
-	end
+    if (GetConVar("cl_buu_custombob"):GetBool()) then
+        self.BobScale = 0
+    else
+        self.BobScale = 1
+    end
+    
+       // Handle HL2 weapon swaying
+    if (GetConVar("cl_buu_customsway"):GetBool()) then
+        self.SwayScale = 0
+    else
+        self.SwayScale = 1
+    end
 end
 
 
@@ -814,7 +814,7 @@ end
 function SWEP:ShootCode(mode)
     local dmg = mode.Damage or 0
     local numbul = mode.NumShots or 1
-	local cone 	 = mode.Cone or 0.01
+    local cone   = mode.Cone or 0.01
     
     // If we have ironsights, reduce the spread
     if (self:GetBuu_Ironsights()) then
@@ -822,63 +822,63 @@ function SWEP:ShootCode(mode)
     end
 
     // Create our bullet structure and fire it
-	local bullet 	= {}
-	bullet.Num  	= numbul
-	bullet.Src 		= self.Owner:GetShootPos()
-    bullet.Dir 		= (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0) * 33):Forward()
-	bullet.Spread 	= Vector(cone, cone, 0)
-	bullet.Tracer 	= 0
-	bullet.Force 	= 0.5*dmg
-	bullet.Damage 	= dmg
-	bullet.Callback = HitImpact
-	self.Owner:FireBullets(bullet)	
+    local bullet    = {}
+    bullet.Num      = numbul
+    bullet.Src      = self.Owner:GetShootPos()
+    bullet.Dir      = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0) * 33):Forward()
+    bullet.Spread   = Vector(cone, cone, 0)
+    bullet.Tracer   = 0
+    bullet.Force    = 0.5*dmg
+    bullet.Damage   = dmg
+    bullet.Callback = HitImpact
+    self.Owner:FireBullets(bullet)
 
     // Door destruction
-	local tr = self.Owner:GetEyeTrace()
-	if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
+    local tr = self.Owner:GetEyeTrace()
+    if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
     if (tr.HitPos:Distance(self.Owner:GetShootPos()) > 250) then return end
-	if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
+    if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
 
         // Force the door to open
-		tr.Entity:Fire("open", "", 0.001)
-		tr.Entity:Fire("unlock", "", 0.001)
-
+        tr.Entity:Fire("open", "", 0.001)
+        tr.Entity:Fire("unlock", "", 0.001)
+        
         // Get data from the door
-		local pos = tr.Entity:GetPos()
-		local ang = tr.Entity:GetAngles()
-		local model = tr.Entity:GetModel()
-		local skin = tr.Entity:GetSkin()
-
+        local pos = tr.Entity:GetPos()
+        local ang = tr.Entity:GetAngles()
+        local model = tr.Entity:GetModel()
+        local skin = tr.Entity:GetSkin()
+        
         // Disable the real door
-		tr.Entity:SetNotSolid(true)
-		tr.Entity:SetNoDraw(true)
-    
+        tr.Entity:SetNotSolid(true)
+        tr.Entity:SetNoDraw(true)
+        
         // Helper function for enabling the door
-		local function ResetDoor(door, fakedoor)
-			door:SetNotSolid(false)
-			door:SetNoDraw(false)
-			fakedoor:Remove()
-		end
-
+        local function ResetDoor(door, fakedoor)
+            door:SetNotSolid(false)
+            door:SetNoDraw(false)
+            fakedoor:Remove()
+        end
+        
         // Get the angles and calculate the force
-		local norm = (pos - self.Owner:GetPos())
-		norm:Normalize()
-		local push = 2000 * norm
-		local ent = ents.Create("prop_physics")
-
+        local norm = (pos - self.Owner:GetPos())
+        norm:Normalize()
+        local push = 2000 * norm
+        local ent = ents.Create("prop_physics")
+        
         // Set the fake door's data
-		ent:SetPos(pos)
-		ent:SetAngles(ang)
-		ent:SetModel(model)
+        ent:SetPos(pos)
+        ent:SetAngles(ang)
+        ent:SetModel(model)
         ent:SetSkin(skin)
-		ent:Spawn()
-
+        ent:Spawn()
+        
         // Add some force to the door
-		timer.Simple(0.01, function() if (ent && push) then ent:GetPhysicsObject():SetVelocity(push) end end)   
-
+        timer.Simple(0.01, function() if (ent && push) then ent:GetPhysicsObject():SetVelocity(push) end end)   
+        
         // Reset the door after some time
-		timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
-	end
+        timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
+    end
 end
 
 
@@ -911,48 +911,48 @@ function SWEP:HandleIronsights()
             self:SetBuu_TimeToScope(CurTime()+0.15)
             
             // Allow ironsights if they're enabled serverside, or if a sniper is being used
-			if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
-				self:SetBuu_Ironsights(true)
+            if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
+                self:SetBuu_Ironsights(true)
             
                 // Play the ironsight sound
                 if (ironsounds[self.IronsightSound] != nil) then
                     self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1,5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
-			end
+            end
         end
         
         // Set the FOV if the scoping animation is finished
-		if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
-			self.Owner:SetFOV(self.SniperZoom, 0)
-		end
-	else
+        if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
+            self.Owner:SetFOV(self.SniperZoom, 0)
+        end
+    else
         // Stop ironsighting if it's on
-		if (self:GetBuu_Ironsights()) then
-			self:SetBuu_Ironsights(false)
+        if (self:GetBuu_Ironsights()) then
+            self:SetBuu_Ironsights(false)
             
             // Play the ironsight sound
-			if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
+            if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
                 if (ironsounds[self.IronsightSound] != nil) then
                     self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1,5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
-			end
+            end
         end
         
         // Reset the ironsight variables and FOV
         self.TimeToScope = 0
         self:SetBuu_TimeToScope(0)
         if (self.Sniper) then
-			self.Owner:SetFOV(0, 0)
+            self.Owner:SetFOV(0, 0)
         end
-	end
+    end
     
     // If we're not using an autosniper, and we can't shoot, unscope
     if (self.Sniper && !self.AutoSniper && CurTime() < self:GetNextPrimaryFire() && self:GetBuu_Ironsights()) then
-		self:SetBuu_Ironsights(false)
+        self:SetBuu_Ironsights(false)
         self.TimeToScope = 0
         self:SetBuu_TimeToScope(0)
         if (self.Sniper) then
-			self.Owner:SetFOV(0, 0)
+            self.Owner:SetFOV(0, 0)
         end
     end
 end
@@ -1158,29 +1158,29 @@ end
 function SWEP:HandleSniperBreath()
 
     // If we're allowed to hold our breath
-	if (GetConVar("sv_buu_sniperbreath"):GetBool() && self.AllowBreath) then
+    if (GetConVar("sv_buu_sniperbreath"):GetBool() && self.AllowBreath) then
         // If we're a sniper
-		if (self.Sniper)then
+        if (self.Sniper)then
             // Breathe in if we press alt, or stop breathing after some time or when we unscope
-			if (self.Owner:KeyPressed(IN_WALK) && self:GetBuu_ScopeBreathe() == 0 && self:GetBuu_Ironsights()) then
-				self:SetBuu_ScopeBreathe(CurTime()+3)
-				self:EmitSound("buu/base/breathe_in"..math.random(1,2)..".wav", 40, 100, 1, CHAN_ITEM)
-			elseif !(self:GetBuu_ScopeBreathe() <= 0) && (self:GetBuu_ScopeBreathe() < CurTime() || self.Owner:KeyReleased(IN_WALK) || !self:GetBuu_Ironsights()) then
-				self:SetBuu_ScopeBreathe(-2)
-				self:EmitSound("buu/base/breathe_out"..math.random(1,3)..".wav", 40, 100, 1, CHAN_ITEM)
-			end
-		end
+            if (self.Owner:KeyPressed(IN_WALK) && self:GetBuu_ScopeBreathe() == 0 && self:GetBuu_Ironsights()) then
+                self:SetBuu_ScopeBreathe(CurTime()+3)
+                self:EmitSound("buu/base/breathe_in"..math.random(1,2)..".wav", 40, 100, 1, CHAN_ITEM)
+            elseif !(self:GetBuu_ScopeBreathe() <= 0) && (self:GetBuu_ScopeBreathe() < CurTime() || self.Owner:KeyReleased(IN_WALK) || !self:GetBuu_Ironsights()) then
+                self:SetBuu_ScopeBreathe(-2)
+                self:EmitSound("buu/base/breathe_out"..math.random(1,3)..".wav", 40, 100, 1, CHAN_ITEM)
+            end
+        end
         
         // Only allow breathing in again after a second
-		if (self:GetBuu_ScopeBreathe() < 0) then
-			if (self:GetBuu_ScopeBreathe() < -1 && self:GetBuu_ScopeBreathe() != 0) then
-				self:SetBuu_ScopeBreathe(self:GetBuu_ScopeBreathe()+0.01)
-			end
-			if (self:GetBuu_ScopeBreathe() > -1) then
-				self:SetBuu_ScopeBreathe(0)
-			end
-		end
-	end
+        if (self:GetBuu_ScopeBreathe() < 0) then
+            if (self:GetBuu_ScopeBreathe() < -1 && self:GetBuu_ScopeBreathe() != 0) then
+                self:SetBuu_ScopeBreathe(self:GetBuu_ScopeBreathe()+0.01)
+            end
+            if (self:GetBuu_ScopeBreathe() > -1) then
+                self:SetBuu_ScopeBreathe(0)
+            end
+        end
+    end
 end
 
 
@@ -1220,7 +1220,7 @@ function SWEP:HandleBarrelSmoke()
     if (GetConVar("cl_buu_barrelsmoke"):GetBool() && self.CanSmoke && (SERVER || IsFirstTimePredicted())) then
     
         // Initialize the variables if they aren't already
-		if (self.Smoke == nil) then
+        if (self.Smoke == nil) then
             self.Smoke = 0
             self.NextSmoke = 0
         end
@@ -1245,7 +1245,7 @@ function SWEP:HandleBarrelSmoke()
             fx:SetAttachment(1)
             util.Effect("buu_smoketrail", fx)
         end
-	end
+    end
 end
 
 
@@ -1434,14 +1434,14 @@ end
 function SWEP:FireAnimationEvent(pos, ang, event)
 
     // Muzzle flash replacement
-	if (event == 5001 || event == 21 || event == 22) then 
-		if !IsValid(self.Owner) then return end
+    if (event == 5001 || event == 21 || event == 22) then 
+        if !IsValid(self.Owner) then return end
         
         // Select which effect to use
         local effect = self.MuzzleEffect
-		if ((self:GetBuu_FireMode() == 0 && self.Primary.Silenced) || (self:GetBuu_FireMode() == 1 && self.Secondary.Silenced)) then
-			effect = self.MuzzleEffectS
-		end
+        if ((self:GetBuu_FireMode() == 0 && self.Primary.Silenced) || (self:GetBuu_FireMode() == 1 && self.Secondary.Silenced)) then
+            effect = self.MuzzleEffectS
+        end
         
         // If we have no effect, then stop
         if (effect == nil) then
@@ -1458,8 +1458,8 @@ function SWEP:FireAnimationEvent(pos, ang, event)
         util.Effect(effect, fx)
         
         // Disable original muzzleflash effect
-		return true
-	end
+        return true
+    end
 end
 
 
@@ -1472,19 +1472,19 @@ end
 -----------------------------*/
 
 function SWEP:GetBoneOrientation(ent, bonename)
-	local pos, ang = Vector(0,0,0), Angle(0,0,0)
+    local pos, ang = Vector(0,0,0), Angle(0,0,0)
 
     // Make sure the bone exists
-	if (!ent:LookupBone(bonename)) then return nil, nil end
+    if (!ent:LookupBone(bonename)) then return nil, nil end
     
     // Get the bone matrix and get its data,
-	local bone = ent:GetBoneMatrix(ent:LookupBone(bonename))
-	if (bone) then
-		pos, ang = bone:GetTranslation(), bone:GetAngles()
-	end
+    local bone = ent:GetBoneMatrix(ent:LookupBone(bonename))
+    if (bone) then
+        pos, ang = bone:GetTranslation(), bone:GetAngles()
+    end
     
     // Return the data
-	return pos, ang
+    return pos, ang
 end
 
 
@@ -1566,7 +1566,7 @@ local function BuuBase_Sliding(ply, mv)
             effect:SetEntity(ply)
             effect:SetNormal(tr.HitNormal)
             util.Effect("buu_slidedust", effect)
-        end	
+        end    
     end
     
     // Check if they collided with something
@@ -1591,18 +1591,18 @@ local function BuuBase_Sliding(ply, mv)
             shake:SetKeyValue("radius", "100")
             shake:SetKeyValue("duration", "0.5")
             shake:SetKeyValue("frequency", "255")
-            shake:SetKeyValue("spawnflags", "4")	
+            shake:SetKeyValue("spawnflags", "4")    
             shake:Spawn()
             shake:Activate()
             shake:Fire("StartShake", "", 0)
         end
-    end	
+    end    
     
     // Stop sliding sound if it's still going
     if (!ply:GetNWBool("Buu_Sliding") && ply.SlideSound != nil) then
         ply.SlideSound:Stop()
         ply.SlideSound = nil
-    end	
+    end    
 end
 hook.Add("Move", "BuuBase_Sliding", BuuBase_Sliding)
 
@@ -1617,12 +1617,12 @@ hook.Add("Move", "BuuBase_Sliding", BuuBase_Sliding)
 local function BuuBase_Sliding_Thirdperson(ply, vel)
 
     // If we're sliding, play the zombie slump animation
-	if (IsValid(ply) && ply:GetNWBool("Buu_Sliding")) then
-		ply.CalcIdeal = ACT_MP_WALK
-		ply.CalcSeqOverride = -1
+    if (IsValid(ply) && ply:GetNWBool("Buu_Sliding")) then
+        ply.CalcIdeal = ACT_MP_WALK
+        ply.CalcSeqOverride = -1
         ply.CalcSeqOverride = ply:LookupSequence("zombie_slump_idle_02")
-		return ply.CalcIdeal, ply.CalcSeqOverride
-	end
+        return ply.CalcIdeal, ply.CalcSeqOverride
+    end
 end
 hook.Add("CalcMainActivity", "BuuBase_Sliding_Thirdperson", BuuBase_Sliding_Thirdperson)
 
@@ -1693,21 +1693,21 @@ if (CLIENT) then
     -----------------------------*/
 
     // Initialize globals
-	local FinalVector = Vector(0,0,0)
-	local FinalVectorAngle = Vector(0,0,0)
-	local TargetVector = Vector(0,0,0)
-	local TargetVectorAngle = Vector(0,0,0)
-	local Current_Aim = Angle(0,0,0)
-	local ironsighttime = 0
+    local FinalVector = Vector(0,0,0)
+    local FinalVectorAngle = Vector(0,0,0)
+    local TargetVector = Vector(0,0,0)
+    local TargetVectorAngle = Vector(0,0,0)
+    local Current_Aim = Angle(0,0,0)
+    local ironsighttime = 0
     local lastfire = 0
     local ironfiretime = 0
-	function SWEP:ManipulateViewModel(pos, ang)
-		if !IsValid(self.Owner) then return end
+    function SWEP:ManipulateViewModel(pos, ang)
+        if !IsValid(self.Owner) then return end
         
-		local ply = LocalPlayer()
-		local weapon = ply:GetActiveWeapon()
-		local walkspeed = self.Owner:GetVelocity():Length() 
-		local Tr = self.Owner:GetEyeTrace()
+        local ply = LocalPlayer()
+        local weapon = ply:GetActiveWeapon()
+        local walkspeed = self.Owner:GetVelocity():Length() 
+        local Tr = self.Owner:GetEyeTrace()
         
         // Initialize uninitialized object variables
         if (self.LastEyePosition == nil) then
@@ -1716,12 +1716,12 @@ if (CLIENT) then
         if (self.EyePosition == nil) then
             self.EyePosition = Angle(0,0,0)
         end
-		
-		
-		/*--------------------------------------------
-				  Animation Transition Speed 
-		--------------------------------------------*/
-		
+        
+        
+        /*--------------------------------------------
+                  Animation Transition Speed 
+        --------------------------------------------*/
+        
         // Decide the animation speed based on what the player is currently doing
         local animspeed = 5
         if (self.LandTime > RealTime() && !(self.Owner:KeyDown(IN_SPEED) && self.Owner:IsOnGround())) then
@@ -1729,11 +1729,11 @@ if (CLIENT) then
         elseif (IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40)) then
             animspeed = 10
         elseif (self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then 
-			if !self:GetBuu_Ironsights() then
+            if !self:GetBuu_Ironsights() then
                 animspeed = 4
-			else
+            else
                 animspeed = 10
-			end
+            end
         end
         
         // Smoothly transition the vectors with the target values
@@ -1741,22 +1741,22 @@ if (CLIENT) then
         FinalVectorAngle = LerpVector(animspeed*FrameTime(), FinalVectorAngle, TargetVectorAngle) 
         
         // Change the angles and positions with the new vectors
-		ang:RotateAroundAxis(ang:Right(), FinalVectorAngle.x)
-		ang:RotateAroundAxis(ang:Up(), FinalVectorAngle.y)
-		ang:RotateAroundAxis(ang:Forward(), FinalVectorAngle.z)
-		pos = pos + FinalVector.z*ang:Up()
-		pos = pos + FinalVector.y*ang:Forward()
-		pos = pos + FinalVector.x*ang:Right()
+        ang:RotateAroundAxis(ang:Right(), FinalVectorAngle.x)
+        ang:RotateAroundAxis(ang:Up(), FinalVectorAngle.y)
+        ang:RotateAroundAxis(ang:Forward(), FinalVectorAngle.z)
+        pos = pos + FinalVector.z*ang:Up()
+        pos = pos + FinalVector.y*ang:Forward()
+        pos = pos + FinalVector.x*ang:Right()
         
 
         /*--------------------------------------------
-		   Ironsight, Crouching, Near Wall, Ladder,
+           Ironsight, Crouching, Near Wall, Ladder,
                     Sliding, and Sprinting
-		--------------------------------------------*/
-		
-		local maxroll = 30 // How much to roll the gun when going into ironsights
+        --------------------------------------------*/
+        
+        local maxroll = 30 // How much to roll the gun when going into ironsights
         if (self:GetBuu_Ironsights() && !self:GetBuu_Reloading()) then
-			local targettime = 0
+            local targettime = 0
             
             // If just fired, reset the shooting animation timer
             if (self:GetBuu_FireTime() != lastfire) then
@@ -1765,20 +1765,20 @@ if (CLIENT) then
             end
         
             // If we just fired, handle ironsight shooting animations
-        	if (ironfiretime > CurTime() && !self.UseNormalShootIron) then
+            if (ironfiretime > CurTime() && !self.UseNormalShootIron) then
                 TargetVector = self.IronSightsPos + (self.IronSightsShootPos-self.IronSightsPos)
             else
                 TargetVector = self.IronSightsPos
             end
             
             // Calculate the time to perform the rolling animation
-			ironsighttime = Lerp(10*FrameTime(), ironsighttime+1, maxroll)
-			if (GetConVar("cl_buu_ironsightrolling"):GetBool()) then
-				targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) // Parabolas! Thank you https://www.desmos.com for some nice visuals.
-			end
+            ironsighttime = Lerp(10*FrameTime(), ironsighttime+1, maxroll)
+            if (GetConVar("cl_buu_ironsightrolling"):GetBool()) then
+                targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) // Parabolas! Thank you https://www.desmos.com for some nice visuals.
+            end
             
             // Modify the final angle with the roll
-			TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3),0,-targettime)
+            TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3),0,-targettime)
         elseif (self:GetBuu_OnLadder()) then 
             
             // Lower the gun if on a ladder
@@ -1810,15 +1810,15 @@ if (CLIENT) then
         end
         
         // Calculate the next ironsight tiime
-		ironsighttime = math.Clamp(ironsighttime - 1, 0, maxroll)
-		
-		
-		/*--------------------------------------------
-					 Viewmodel Jump Sway
-		--------------------------------------------*/
-		
+        ironsighttime = math.Clamp(ironsighttime - 1, 0, maxroll)
+        
+        
+        /*--------------------------------------------
+                     Viewmodel Jump Sway
+        --------------------------------------------*/
+        
         // Custom jumping animation
-		if (GetConVar("cl_buu_customjump"):GetBool()) then
+        if (GetConVar("cl_buu_customjump"):GetBool()) then
         
             // If we're not on the ground, reset the landing animation time
             if (!self.Owner:IsOnGround()) then
@@ -1839,62 +1839,62 @@ if (CLIENT) then
                 end
             end
         
-			// Helpful bezier function. Use this if you gotta: https://www.desmos.com/calculator/cahqdxeshd
-			local function BezierY(f,a,b,c)
-				f = f*3.2258
-				return (1-f)^2 *a + 2*(1-f)*f*b + (f^2)*c
-			end
+            // Helpful bezier function. Use this if you gotta: https://www.desmos.com/calculator/cahqdxeshd
+            local function BezierY(f,a,b,c)
+                f = f*3.2258
+                return (1-f)^2 *a + 2*(1-f)*f*b + (f^2)*c
+            end
             
             // If we're not ironsighting, then use the custom Lua animation
-			if (!self:GetBuu_Ironsights() && self.Owner:WaterLevel() < 1) then
+            if (!self:GetBuu_Ironsights() && self.Owner:WaterLevel() < 1) then
                 
                 // Decide what to do based on the jump arc
-				if (self.JumpTime > RealTime()) then
+                if (self.JumpTime > RealTime()) then
                 
                     // If we jumped, do a curve upwards
-					local f = 0.31 - (self.JumpTime-RealTime())
-					local xx = BezierY(f,0,-4,0)
-					local yy = 0
-					local zz = BezierY(f,0,-2,-5)
-					local pt = BezierY(f,0,-4.36,10)
-					local yw = xx
-					local rl = BezierY(f,0,-10.82,-5)
-					TargetVector = TargetVector + Vector(xx, yy, zz)
-					TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
-				elseif (!ply:IsOnGround() && (ply:GetMoveType() != MOVETYPE_NOCLIP && !self:GetBuu_OnLadder())) then
+                    local f = 0.31 - (self.JumpTime-RealTime())
+                    local xx = BezierY(f,0,-4,0)
+                    local yy = 0
+                    local zz = BezierY(f,0,-2,-5)
+                    local pt = BezierY(f,0,-4.36,10)
+                    local yw = xx
+                    local rl = BezierY(f,0,-10.82,-5)
+                    TargetVector = TargetVector + Vector(xx, yy, zz)
+                    TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
+                elseif (!ply:IsOnGround() && (ply:GetMoveType() != MOVETYPE_NOCLIP && !self:GetBuu_OnLadder())) then
                 
                     // Shaking while falling
-					local BreatheTime = RealTime() * 30
-					TargetVector = TargetVector + Vector(math.cos(BreatheTime/2)/16, 0, -5+(math.sin(BreatheTime/3)/16))
-					TargetVectorAngle = TargetVectorAngle + Vector(10-(math.sin(BreatheTime/3)/4), math.cos(BreatheTime/2)/4, -5)
-				elseif (self.LandTime > RealTime()) then
+                    local BreatheTime = RealTime() * 30
+                    TargetVector = TargetVector + Vector(math.cos(BreatheTime/2)/16, 0, -5+(math.sin(BreatheTime/3)/16))
+                    TargetVectorAngle = TargetVectorAngle + Vector(10-(math.sin(BreatheTime/3)/4), math.cos(BreatheTime/2)/4, -5)
+                elseif (self.LandTime > RealTime()) then
                 
                     // If we landed, do a fancy curve downwards
-					local f = (self.LandTime-RealTime())
-					local xx = BezierY(f,0,-4,0)
-					local yy = 0
-					local zz = BezierY(f,0,-2,-5)
-					local pt = BezierY(f,0,-4.36,10)
-					local yw = xx
-					local rl = BezierY(f,0,-10.82,-5)
-					TargetVector = TargetVector + Vector(xx, yy, zz)
-					TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
-				end
-			else
+                    local f = (self.LandTime-RealTime())
+                    local xx = BezierY(f,0,-4,0)
+                    local yy = 0
+                    local zz = BezierY(f,0,-2,-5)
+                    local pt = BezierY(f,0,-4.36,10)
+                    local yw = xx
+                    local rl = BezierY(f,0,-10.82,-5)
+                    TargetVector = TargetVector + Vector(xx, yy, zz)
+                    TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
+                end
+           else
                 
                 // Otherwise, just bob the viewmodel up and down
-				TargetVector = TargetVector + Vector(0 ,0 , math.Clamp(self.Owner:GetVelocity().z / 1000,-1,1))
-			end
-		end
-		
-		
-		/*--------------------------------------------
-					  Viewmodel Bobbing
-		--------------------------------------------*/
-		
+                TargetVector = TargetVector + Vector(0 ,0 , math.Clamp(self.Owner:GetVelocity().z / 1000,-1,1))
+            end
+        end
+        
+        
+        /*--------------------------------------------
+                      Viewmodel Bobbing
+        --------------------------------------------*/
+        
         // Handle viewmodel bobbing
         if (ply:IsOnGround() && GetConVar("cl_buu_custombob"):GetBool()) then
-			if (self:GetBuu_Sprinting() && !self:GetBuu_Reloading() && GetConVar("sv_buu_sprinting"):GetBool() && !self.Owner:GetNWBool("Buu_Sliding")) then
+            if (self:GetBuu_Sprinting() && !self:GetBuu_Reloading() && GetConVar("sv_buu_sprinting"):GetBool() && !self.Owner:GetNWBool("Buu_Sliding")) then
             
                 // Sprinting bobbing
                 local BreatheTime = RealTime() * 18
@@ -1905,13 +1905,13 @@ if (CLIENT) then
                     TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400,0,math.cos(BreatheTime)*walkspeed/400)
                     TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400,0)
                 end
-			elseif (walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
+            elseif (walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
             
                 // Walking bobbing
-				local BreatheTime = RealTime() * 16
-				if (self:GetBuu_Ironsights()) then
-					TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
-				else
+                local BreatheTime = RealTime() * 16
+                if (self:GetBuu_Ironsights()) then
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
+                else
                     local roll = 0
                     local yaw = 0
                     if (self.Owner:KeyDown(IN_MOVERIGHT)) then
@@ -1919,42 +1919,42 @@ if (CLIENT) then
                     elseif (self.Owner:KeyDown(IN_MOVELEFT)) then
                         yaw = 4*(walkspeed/200)
                     end
-					TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5,0,0)
-					TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
-				end
-			elseif !self:GetBuu_Ironsights() then
+                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5,0,0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
+                end
+            elseif !self:GetBuu_Ironsights() then
             
                 // Ironsight bobbing
-				local BreatheTime = RealTime() * 2
-				TargetVector = TargetVector - Vector(math.cos(BreatheTime/4)/4,0,-math.cos(BreatheTime/5)/4)
-				TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/5),math.cos(BreatheTime/4),math.cos(BreatheTime/7))
-			end            
-		end
-		
-	
-		/*--------------------------------------------
-						Viewmodel Sway
-		--------------------------------------------*/
-		
+                local BreatheTime = RealTime() * 2
+                TargetVector = TargetVector - Vector(math.cos(BreatheTime/4)/4,0,-math.cos(BreatheTime/5)/4)
+                TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/5),math.cos(BreatheTime/4),math.cos(BreatheTime/7))
+            end            
+        end
+        
+    
+        /*--------------------------------------------
+                        Viewmodel Sway
+        --------------------------------------------*/
+        
         // Handle viewmodel swaying
-		if (GetConVar("cl_buu_customsway"):GetBool()) then
-			self.LastEyePosition = self.EyePosition
-			
-			Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
-			
-			self.EyePosition = Current_Aim - ply:EyeAngles()
-			self.EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
-			
-			ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale,-4,4))
-			ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale,-4,4))
+        if (GetConVar("cl_buu_customsway"):GetBool()) then
+            self.LastEyePosition = self.EyePosition
+            
+            Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
+            
+            self.EyePosition = Current_Aim - ply:EyeAngles()
+            self.EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
+            
+            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale,-4,4))
+            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale,-4,4))
 
-			pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
-			pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
-		end
-		
+            pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
+            pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
+        end
+        
         // Return the final calculated position and angle
-		return pos, ang
-	end
+        return pos, ang
+    end
     
     
     /*-----------------------------
@@ -2354,30 +2354,30 @@ if (CLIENT) then
     
         // Draw the sniper scope in using it, or the crosshair if not
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self:GetBuu_Ironsights()) then
-			// Draw the scope texture
-			surface.SetDrawColor(0, 0, 0, 255)
-			surface.SetTexture(surface.GetTextureID(self.SniperTexture))
-			surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
+            // Draw the scope texture
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.SetTexture(surface.GetTextureID(self.SniperTexture))
+            surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
 
-			// Fill in everything else with a black as dark as my heart
-			surface.SetDrawColor(0, 0, 0, 255)
-			surface.DrawRect(self.QuadTable.x1 - 2.5, self.QuadTable.y1 - 2.5, self.QuadTable.w1 + 5, self.QuadTable.h1 + 5)
-			surface.DrawRect(self.QuadTable.x2 - 2.5, self.QuadTable.y2 - 2.5, self.QuadTable.w2 + 5, self.QuadTable.h2 + 5)
-			surface.DrawRect(self.QuadTable.x3 - 2.5, self.QuadTable.y3 - 2.5, self.QuadTable.w3 + 5, self.QuadTable.h3 + 5)
-			surface.DrawRect(self.QuadTable.x4 - 2.5, self.QuadTable.y4 - 2.5, self.QuadTable.w4 + 5, self.QuadTable.h4 + 5)
+            // Fill in everything else with a black as dark as my heart
+            surface.SetDrawColor(0, 0, 0, 255)
+            surface.DrawRect(self.QuadTable.x1 - 2.5, self.QuadTable.y1 - 2.5, self.QuadTable.w1 + 5, self.QuadTable.h1 + 5)
+            surface.DrawRect(self.QuadTable.x2 - 2.5, self.QuadTable.y2 - 2.5, self.QuadTable.w2 + 5, self.QuadTable.h2 + 5)
+            surface.DrawRect(self.QuadTable.x3 - 2.5, self.QuadTable.y3 - 2.5, self.QuadTable.w3 + 5, self.QuadTable.h3 + 5)
+            surface.DrawRect(self.QuadTable.x4 - 2.5, self.QuadTable.y4 - 2.5, self.QuadTable.w4 + 5, self.QuadTable.h4 + 5)
         elseif (GetConVar("sv_buu_crosshair"):GetInt() == 1 && !self:GetBuu_Ironsights() && !self:GetBuu_NearWall() && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_Reloading()) then
-			self.DrawCrosshair = false
+            self.DrawCrosshair = false
             if (self.CrosshairType == 0) then return end
             
             // Pick the Crosshair
-			if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 1) then
+            if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 1) then
             
                 // Enable HL2 Croshair
-				self.DrawCrosshair = true
-			else
-				local x, y
+                self.DrawCrosshair = true
+            else
+                local x, y
                 local r, g, b
-				local scale = 1
+                local scale = 1
                 local movementgap = math.Clamp(LocalPlayer():GetVelocity():Length()/300, 0, 1.5)
                 
                 // Calculate crosshair scale and gap
@@ -2396,28 +2396,28 @@ if (CLIENT) then
                 finalgap = Lerp(1, finalgap, movementgap*50+scale*40+togap+self.Primary.Recoil*15)
                 
                 // Set the crosshair X+Y where the player is looking in thirdperson, or the center of the screen in first person
-				if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
-					local tr = util.GetPlayerTrace(self.Owner)
-					tr.mask = (CONTENTS_SOLID+CONTENTS_MOVEABLE+CONTENTS_MONSTER+CONTENTS_WINDOW+CONTENTS_DEBRIS+CONTENTS_GRATE+CONTENTS_AUX)
-					local trace = util.TraceLine(tr)
-					local coords = trace.HitPos:ToScreen()
-					x, y = coords.x, coords.y
-				else
-					x, y = ScrW()/2, ScrH()/2
-				end
+                if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
+                    local tr = util.GetPlayerTrace(self.Owner)
+                    tr.mask = (CONTENTS_SOLID+CONTENTS_MOVEABLE+CONTENTS_MONSTER+CONTENTS_WINDOW+CONTENTS_DEBRIS+CONTENTS_GRATE+CONTENTS_AUX)
+                    local trace = util.TraceLine(tr)
+                    local coords = trace.HitPos:ToScreen()
+                    x, y = coords.x, coords.y
+                else
+                    x, y = ScrW()/2, ScrH()/2
+                end
                 
                 // Set the crosshair color
-				if (GetConVar("cl_buu_crosshairhealth"):GetInt() == 0) then
-					r = GetConVar("cl_buu_crosshairred"):GetInt()
+                if (GetConVar("cl_buu_crosshairhealth"):GetInt() == 0) then
+                    r = GetConVar("cl_buu_crosshairred"):GetInt()
                     g = GetConVar("cl_buu_crosshairgreen"):GetInt()
                     b = GetConVar("cl_buu_crosshairblue"):GetInt()
-				else
-					local hp = LocalPlayer():Health()
-					local maxhp = LocalPlayer():GetMaxHealth()
-					r = math.Clamp(255*2-(hp*2/maxhp)*255, 0, 255)
-					g = math.Clamp((hp*2/maxhp)*255, 0, 255)
-					b = 0
-				end
+                else
+                    local hp = LocalPlayer():Health()
+                    local maxhp = LocalPlayer():GetMaxHealth()
+                    r = math.Clamp(255*2-(hp*2/maxhp)*255, 0, 255)
+                    g = math.Clamp((hp*2/maxhp)*255, 0, 255)
+                    b = 0
+                end
                 surface.SetDrawColor(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt())
                 
                 if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 2) then
@@ -2456,10 +2456,10 @@ if (CLIENT) then
                         surface.DrawCircle(x, y, self.Primary.Cone*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
                     end
                 end
-			end
-		else
-			self.DrawCrosshair = false
-		end
+            end
+        else
+            self.DrawCrosshair = false
+        end
     end
 
 
