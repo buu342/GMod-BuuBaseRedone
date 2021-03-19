@@ -121,7 +121,7 @@ SWEP.RunArmPos   = Vector(1.358, 1.228, -0.94)
 SWEP.RunArmAngle = Vector(-10.554, 34.167, -20)
 
 -- Crouching positions
-SWEP.CrouchPos = Vector(-1,-1,.5)
+SWEP.CrouchPos = Vector(-1, -1,.5)
 SWEP.CrouchAng = Vector(0, 0, 0)
 
 -- Use ACT_VM_PRIMARYATTACK in ironsights?
@@ -151,8 +151,8 @@ SWEP.MagDropTime       = 0.5   -- When to drop mag model (percent of animation)
 
 SWEP.Laser     = false                     -- Enable/disable laser
 SWEP.LaserBone = "ValveBiped.Bip01_R_Hand" -- What bone to attach the laser to
-SWEP.LaserPos  = Vector(0,0,0)             -- What position to translate the laser
-SWEP.LaserAng  = Angle(0,0,0)              -- What angle to translate the laser
+SWEP.LaserPos  = Vector(0, 0, 0)             -- What position to translate the laser
+SWEP.LaserAng  = Angle(0, 0, 0)              -- What angle to translate the laser
 
 
 /*====================== Scope Settings =====================*/
@@ -226,7 +226,7 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Float", 16, "Buu_ScopeBreathe")    -- Predicted timer for scope breathing
     self:NetworkVar("Float", 17, "Buu_StateTimer")      -- Multi-use predicted timer
     self:NetworkVar("Int",   10, "Buu_BurstCount")      -- Burst fire count
-    self:NetworkVar("Int",   11, "Buu_SpecialState")    -- Special state for stuff. 1,2,3 used for shotgun reload, -1 for holster
+    self:NetworkVar("Int",   11, "Buu_SpecialState")    -- Special state for stuff. 1, 2, 3 used for shotgun reload, -1 for holster
     self:NetworkVar("Int",   12, "Buu_FireMode")        -- Weapon firing mode (0 = self.Primary, 1 = self.Secondary)
     self:NetworkVar("Bool",  10, "Buu_Reloading")       -- Are we reloading?
     self:NetworkVar("Bool",  11, "Buu_Ironsights")      -- Are we in ironsights?
@@ -598,7 +598,7 @@ function SWEP:PrimaryAttack()
         if (mode.Silenced) then
             volume = 60
         end
-        self:EmitSound(sound, volume, math.random(97,102), 1, self.ShootChannel)
+        self:EmitSound(sound, volume, math.random(97, 102), 1, self.ShootChannel)
     end
     
     -- Clicking sound on low ammo
@@ -611,7 +611,7 @@ function SWEP:PrimaryAttack()
     if (self:GetBuu_Ironsights()) then
         recoil = recoil/2
     end
-    self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5,-2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1,1)*recoil, 0))
+    self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5, -2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1, 1)*recoil, 0))
     self:TakePrimaryAmmo(mode.TakeAmmo or 1)
     
     -- Handle burst fire
@@ -916,7 +916,7 @@ function SWEP:HandleIronsights()
             
                 -- Play the ironsight sound
                 if (ironsounds[self.IronsightSound] != nil) then
-                    self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1,5))..".wav", 40, 100, 1, CHAN_VOICE2) 
+                    self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1, 5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
             end
         end
@@ -933,7 +933,7 @@ function SWEP:HandleIronsights()
             -- Play the ironsight sound
             if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
                 if (ironsounds[self.IronsightSound] != nil) then
-                    self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1,5))..".wav", 40, 100, 1, CHAN_VOICE2) 
+                    self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1, 5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
             end
         end
@@ -1164,10 +1164,10 @@ function SWEP:HandleSniperBreath()
             -- Breathe in if we press alt, or stop breathing after some time or when we unscope
             if (self.Owner:KeyPressed(IN_WALK) && self:GetBuu_ScopeBreathe() == 0 && self:GetBuu_Ironsights()) then
                 self:SetBuu_ScopeBreathe(CurTime()+3)
-                self:EmitSound("buu/base/breathe_in"..math.random(1,2)..".wav", 40, 100, 1, CHAN_ITEM)
+                self:EmitSound("buu/base/breathe_in"..math.random(1, 2)..".wav", 40, 100, 1, CHAN_ITEM)
             elseif !(self:GetBuu_ScopeBreathe() <= 0) && (self:GetBuu_ScopeBreathe() < CurTime() || self.Owner:KeyReleased(IN_WALK) || !self:GetBuu_Ironsights()) then
                 self:SetBuu_ScopeBreathe(-2)
-                self:EmitSound("buu/base/breathe_out"..math.random(1,3)..".wav", 40, 100, 1, CHAN_ITEM)
+                self:EmitSound("buu/base/breathe_out"..math.random(1, 3)..".wav", 40, 100, 1, CHAN_ITEM)
             end
         end
         
@@ -1368,7 +1368,7 @@ function MagazineDrop(len, ply, wep)
     
         -- Create the prop
         local mag = ents.CreateClientProp()
-        mag:SetPos(ply:GetPos()+Vector(0,0,50))
+        mag:SetPos(ply:GetPos()+Vector(0, 0, 50))
         mag:SetAngles(ply:GetAngles())
         mag:SetModel(wep.MagModel)
         if (wep:Clip1() == 0) then
@@ -1472,7 +1472,7 @@ end
 -----------------------------*/
 
 function SWEP:GetBoneOrientation(ent, bonename)
-    local pos, ang = Vector(0,0,0), Angle(0,0,0)
+    local pos, ang = Vector(0, 0, 0), Angle(0, 0, 0)
 
     -- Make sure the bone exists
     if (!ent:LookupBone(bonename)) then return nil, nil end
@@ -1570,7 +1570,7 @@ local function BuuBase_Sliding(ply, mv)
     end
     
     -- Check if they collided with something
-    local tr = util.QuickTrace(ply:GetPos()+Vector(0,0,50), (ply:GetNWVector("Buu_SlideDir")*50), ply)
+    local tr = util.QuickTrace(ply:GetPos()+Vector(0, 0, 50), (ply:GetNWVector("Buu_SlideDir")*50), ply)
     if (tr && tr.Hit && ply:GetNWBool("Buu_Sliding")) then
     
         -- Stop sliding
@@ -1693,11 +1693,11 @@ if (CLIENT) then
     -----------------------------*/
 
     -- Initialize globals
-    local FinalVector = Vector(0,0,0)
-    local FinalVectorAngle = Vector(0,0,0)
-    local TargetVector = Vector(0,0,0)
-    local TargetVectorAngle = Vector(0,0,0)
-    local Current_Aim = Angle(0,0,0)
+    local FinalVector = Vector(0, 0, 0)
+    local FinalVectorAngle = Vector(0, 0, 0)
+    local TargetVector = Vector(0, 0, 0)
+    local TargetVectorAngle = Vector(0, 0, 0)
+    local Current_Aim = Angle(0, 0, 0)
     local ironsighttime = 0
     local lastfire = 0
     local ironfiretime = 0
@@ -1711,10 +1711,10 @@ if (CLIENT) then
         
         -- Initialize uninitialized object variables
         if (self.LastEyePosition == nil) then
-            self.LastEyePosition = Angle(0,0,0)
+            self.LastEyePosition = Angle(0, 0, 0)
         end
         if (self.EyePosition == nil) then
-            self.EyePosition = Angle(0,0,0)
+            self.EyePosition = Angle(0, 0, 0)
         end
         
         
@@ -1778,12 +1778,12 @@ if (CLIENT) then
             end
             
             -- Modify the final angle with the roll
-            TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3),0,-targettime)
+            TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3), 0, -targettime)
         elseif (self:GetBuu_OnLadder()) then 
             
             -- Lower the gun if on a ladder
-            TargetVector = Vector(0,0,2)
-            TargetVectorAngle = Vector(-40,0,0)
+            TargetVector = Vector(0, 0, 2)
+            TargetVectorAngle = Vector(-40, 0, 0)
         elseif (self:GetBuu_Sprinting() && !self:GetBuu_Reloading() && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner:GetNWBool("Buu_Sliding") && !GetConVar("sv_buu_slideshoot"):GetBool()))) then 
             
             -- Do the sprinting and/or sliding animation
@@ -1792,8 +1792,8 @@ if (CLIENT) then
         elseif (self.Owner:GetNWBool("Buu_Sliding") && GetConVar("cl_buu_slidetilt"):GetBool()) then 
         
             -- Tilt the viewmodel if we're sliding
-            TargetVector = Vector(0,0,0)
-            TargetVectorAngle = Vector(0,0,20)   
+            TargetVector = Vector(0, 0, 0)
+            TargetVectorAngle = Vector(0, 0, 20)   
         elseif (self:GetBuu_NearWall() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading())) then 
         
             -- Do "Near Wall" animation
@@ -1805,8 +1805,8 @@ if (CLIENT) then
             TargetVector = self.CrouchPos
             TargetVectorAngle = self.CrouchAng
         else
-            TargetVector = Vector(0,0,0)
-            TargetVectorAngle = Vector(0,0,0)
+            TargetVector = Vector(0, 0, 0)
+            TargetVectorAngle = Vector(0, 0, 0)
         end
         
         -- Calculate the next ironsight tiime
@@ -1853,12 +1853,12 @@ if (CLIENT) then
                 
                     -- If we jumped, do a curve upwards
                     local f = 0.31 - (self.JumpTime-RealTime())
-                    local xx = BezierY(f,0,-4,0)
+                    local xx = BezierY(f, 0, -4, 0)
                     local yy = 0
-                    local zz = BezierY(f,0,-2,-5)
-                    local pt = BezierY(f,0,-4.36,10)
+                    local zz = BezierY(f, 0, -2, -5)
+                    local pt = BezierY(f, 0, -4.36, 10)
                     local yw = xx
-                    local rl = BezierY(f,0,-10.82,-5)
+                    local rl = BezierY(f, 0, -10.82, -5)
                     TargetVector = TargetVector + Vector(xx, yy, zz)
                     TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
                 elseif (!ply:IsOnGround() && (ply:GetMoveType() != MOVETYPE_NOCLIP && !self:GetBuu_OnLadder())) then
@@ -1871,19 +1871,19 @@ if (CLIENT) then
                 
                     -- If we landed, do a fancy curve downwards
                     local f = (self.LandTime-RealTime())
-                    local xx = BezierY(f,0,-4,0)
+                    local xx = BezierY(f, 0, -4, 0)
                     local yy = 0
-                    local zz = BezierY(f,0,-2,-5)
-                    local pt = BezierY(f,0,-4.36,10)
+                    local zz = BezierY(f, 0, -2, -5)
+                    local pt = BezierY(f, 0, -4.36, 10)
                     local yw = xx
-                    local rl = BezierY(f,0,-10.82,-5)
+                    local rl = BezierY(f, 0, -10.82, -5)
                     TargetVector = TargetVector + Vector(xx, yy, zz)
                     TargetVectorAngle = TargetVectorAngle + Vector(pt, yw, rl)
                 end
            else
                 
                 -- Otherwise, just bob the viewmodel up and down
-                TargetVector = TargetVector + Vector(0 ,0 , math.Clamp(self.Owner:GetVelocity().z / 1000,-1,1))
+                TargetVector = TargetVector + Vector(0, 0, math.Clamp(self.Owner:GetVelocity().z/1000, -1, 1))
             end
         end
         
@@ -1899,18 +1899,18 @@ if (CLIENT) then
                 -- Sprinting bobbing
                 local BreatheTime = RealTime() * 18
                 if (self.PistolSprint) then
-                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*walkspeed/400, -math.cos(BreatheTime)*walkspeed/400,0)
-                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*walkspeed/400,0,0)
+                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*walkspeed/400, -math.cos(BreatheTime)*walkspeed/400, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*walkspeed/400, 0, 0)
                 else
-                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400,0,math.cos(BreatheTime)*walkspeed/400)
-                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400,0)
+                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400, 0,math.cos(BreatheTime)*walkspeed/400)
+                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400, 0)
                 end
             elseif (walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
             
                 -- Walking bobbing
                 local BreatheTime = RealTime() * 16
                 if (self:GetBuu_Ironsights()) then
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime / 2) / 2)*walkspeed/200,0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime/2)/2)*walkspeed/200, 0)
                 else
                     local roll = 0
                     local yaw = 0
@@ -1919,14 +1919,14 @@ if (CLIENT) then
                     elseif (self.Owner:KeyDown(IN_MOVELEFT)) then
                         yaw = 4*(walkspeed/200)
                     end
-                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5,0,0)
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime),-0.3,0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
+                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5, 0, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime), -0.3, 0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
                 end
             elseif !self:GetBuu_Ironsights() then
             
                 -- Ironsight bobbing
                 local BreatheTime = RealTime() * 2
-                TargetVector = TargetVector - Vector(math.cos(BreatheTime/4)/4,0,-math.cos(BreatheTime/5)/4)
+                TargetVector = TargetVector - Vector(math.cos(BreatheTime/4)/4, 0, -math.cos(BreatheTime/5)/4)
                 TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/5),math.cos(BreatheTime/4),math.cos(BreatheTime/7))
             end            
         end
@@ -1945,11 +1945,11 @@ if (CLIENT) then
             self.EyePosition = Current_Aim - ply:EyeAngles()
             self.EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
             
-            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale,-4,4))
-            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale,-4,4))
+            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale, -4, 4))
+            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale, -4, 4))
 
-            pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale),-1.5,1.5) * ang:Up()
-            pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale),-1.5,1.5) * ang:Right()
+            pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale), -1.5, 1.5) * ang:Up()
+            pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale), -1.5, 1.5) * ang:Right()
         end
         
         -- Return the final calculated position and angle
@@ -2113,8 +2113,8 @@ if (CLIENT) then
                 end
                 
                 -- Calculate the sway angle and modify the view
-                ang.pitch = ang.pitch + math.cos(BreatheTime)*wep.IronsightSway / MoveForce
-                ang.yaw = ang.yaw + math.cos(BreatheTime/2)*wep.IronsightSway / MoveForce
+                ang.pitch = ang.pitch + math.cos(BreatheTime)*wep.IronsightSway/MoveForce
+                ang.yaw = ang.yaw + math.cos(BreatheTime/2)*wep.IronsightSway/MoveForce
                 cmd:SetViewAngles(ang) 
             end
         end
@@ -2157,8 +2157,8 @@ if (CLIENT) then
     local tr = {}
     local LaserBeam  = Material('effects/buu_laser')
     local LaserPoint = Material('sprites/redglow1')
-    local LastLaserPos = Vector(0,0,0)
-    local point_pos = Vector(0,0,0)
+    local LastLaserPos = Vector(0, 0, 0)
+    local point_pos = Vector(0, 0, 0)
     function SWEP:ViewModelDrawn(vm)
     
         -- Don't draw the laser/flashlight if the sniper scope is on
@@ -2172,8 +2172,8 @@ if (CLIENT) then
             -- Since the weapon base is a special case, define those values
             if (self:GetClass() == "weapon_buu_base2") then
                 self.LaserBone = "ValveBiped.base"
-                self.LaserPos = Vector(0,13,0)
-                self.LaserAng = Angle(90,0,0)
+                self.LaserPos = Vector(0, 13, 0)
+                self.LaserAng = Angle(90, 0, 0)
             end
             
             -- Get bone information
@@ -2203,7 +2203,7 @@ if (CLIENT) then
                 
                 -- Draw the beam
                 render.SetMaterial(LaserBeam)
-                render.DrawBeam(pos + dir, pos + dir * math.Clamp(dist, 0, 75), 0.5, 0, 0.99, Color(255,0,0))
+                render.DrawBeam(pos + dir, pos + dir * math.Clamp(dist, 0, 75), 0.5, 0, 0.99, Color(255, 0, 0))
                 
                 -- Calculate where the laser point hit
                 local viewpunch = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles()):Forward()
@@ -2292,7 +2292,7 @@ if (CLIENT) then
                     -- Set the laser's hit position and draw it
                     if (tr.Hit) then
                         pos = tr.HitPos
-                        ang = tr.HitNormal:Angle() + Angle(90,0,0)
+                        ang = tr.HitNormal:Angle() + Angle(90, 0, 0)
                         render.SetMaterial(LaserPoint)
                         render.DrawSprite(pos, 6, 6, Color(255, 0, 0, 255))
                     end
@@ -2442,12 +2442,12 @@ if (CLIENT) then
                     
                         -- 4 line crosshair
                         surface.SetTexture(surface.GetTextureID("scope/xhair_fc3"))
-                        surface.DrawTexturedRectRotated(x,y+finalgap+5,4,16,0)
-                        surface.DrawTexturedRectRotated(x+finalgap+5,y,4,16,90)
+                        surface.DrawTexturedRectRotated(x,y+finalgap+5, 4, 16, 0)
+                        surface.DrawTexturedRectRotated(x+finalgap+5,y, 4, 16, 90)
                         if (self.CrosshairType != 2) then
-                            surface.DrawTexturedRectRotated(x,y-finalgap-5,4,16,180)
+                            surface.DrawTexturedRectRotated(x,y-finalgap-5, 4, 16, 180)
                         end
-                        surface.DrawTexturedRectRotated(x-finalgap-5,y,4,16,270)
+                        surface.DrawTexturedRectRotated(x-finalgap-5,y, 4, 16, 270)
                     else
                         
                         -- Circular crosshair
@@ -2459,7 +2459,7 @@ if (CLIENT) then
             end
         else
             self.DrawCrosshair = false
-        endend
+        end
     end
 
 
@@ -2486,7 +2486,7 @@ if (CLIENT) then
         surface.DrawTexturedRect(x, y, w, h)
 
         -- Draw the ammo
-        draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self.Primary.Ammo), "HudSelectionText", x+w, y+h-48, Color(255,255,255,255) , TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0,0,0,255))
+        draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self.Primary.Ammo), "HudSelectionText", x+w, y+h-48, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0, 0, 0, 255))
         
         -- Draw the rest of the weapon info
         self:PrintWeaponInfo(x+w+20, y+h*0.95, alpha)
