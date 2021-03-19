@@ -9,7 +9,7 @@ Sadly, my old sweps broke as a result, so those need to be fixed
 - If you came here for any other reason, sorry I ignored you :((
 Have fun!
 If you need anything, I'm always reachable ^^
-https:--github.com/buu342/GMod-BuuBaseRedone
+https://github.com/buu342/GMod-BuuBaseRedone
 **************************************************************/
 
 AddCSLuaFile()
@@ -1774,7 +1774,7 @@ if (CLIENT) then
             -- Calculate the time to perform the rolling animation
             ironsighttime = Lerp(10*FrameTime(), ironsighttime+1, maxroll)
             if (GetConVar("cl_buu_ironsightrolling"):GetBool()) then
-                targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) -- Parabolas! Thank you https:--www.desmos.com for some nice visuals.
+                targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) -- Parabolas! Thank you https://www.desmos.com for some nice visuals.
             end
             
             -- Modify the final angle with the roll
@@ -1839,7 +1839,7 @@ if (CLIENT) then
                 end
             end
         
-            -- Helpful bezier function. Use this if you gotta: https:--www.desmos.com/calculator/cahqdxeshd
+            -- Helpful bezier function. Use this if you gotta: https://www.desmos.com/calculator/cahqdxeshd
             local function BezierY(f,a,b,c)
                 f = f*3.2258
                 return (1-f)^2 *a + 2*(1-f)*f*b + (f^2)*c
