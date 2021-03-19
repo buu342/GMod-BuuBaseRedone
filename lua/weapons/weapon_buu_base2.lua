@@ -681,7 +681,7 @@ function SWEP:Reload()
         if (self:Clip1() <= 0 && self.ReloadAnimEmpty != nil) then 
             anim = self.ReloadAnimEmpty
             if (self.ReloadAmmoTimeEmpty != nil) then
-                time = CurTime+self.ReloadAmmoTimeEmpty
+                time = self.ReloadAmmoTimeEmpty
             end
         end
         
