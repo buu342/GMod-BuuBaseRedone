@@ -632,9 +632,9 @@ function SWEP:PrimaryAttack()
     -- Change the owner's view angles permanantly
     if ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted())) then
         local eyeang = self.Owner:EyeAngles()
-        eyeang.pitch = eyeang.pitch - (self.Primary.Delay * 1 * 0.5)
-        eyeang.yaw = eyeang.yaw - (self.Primary.Delay * math.random(-1, 1) * 0.25)
-        self.Owner:SetEyeAngles( eyeang )
+        eyeang.pitch = eyeang.pitch - (self.Primary.Delay*0.5)
+        eyeang.yaw = eyeang.yaw - (self.Primary.Delay*math.random(-1, 1)*0.25)
+        self.Owner:SetEyeAngles(eyeang)
     end
     
     -- Remove ammo from the clip
@@ -1476,7 +1476,7 @@ function SWEP:FireAnimationEvent(pos, ang, event)
         end
         
         -- If we have no effect, then stop
-        if (IsValidVariable(effect)) then
+        if (!IsValidVariable(effect)) then
             return false
         end
         
