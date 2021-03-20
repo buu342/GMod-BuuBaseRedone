@@ -89,3 +89,6 @@ And love to all the following people, for being awesome, for teaching me things,
 * Spastik
 * ErrolLiamP + Blaziken
 * ZeqMacaw
+* xDShot
+* datae
+* Spartains
