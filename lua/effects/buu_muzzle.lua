@@ -11,21 +11,21 @@ https://github.com/buu342/GMod-BuuBaseRedone
 -----------------------------*/
 
 function EFFECT:Init(data)
-    // Initialize the effect with the effect data
+    -- Initialize the effect with the effect data
 	self:SetRenderMode(RENDERMODE_TRANSALPHA)
 	self.WeaponEnt = data:GetEntity()
 	self.Attachment = data:GetAttachment()
 	
-    // Store some variables with our positio and direction
+    -- Store some variables with our positio and direction
 	self.Position = self:GetTracerShootPos(data:GetOrigin(), self.WeaponEnt, self.Attachment)
 	self.Forward = data:GetNormal()
 	self.Angle = self.Forward:Angle()
 	self.Right = self.Angle:Right()
 	
-    // Ensure the weapon exists
+    -- Ensure the weapon exists
 	if (!IsValid(self.WeaponEnt) || self.WeaponEnt:GetOwner() == nil) then return end
     
-    // Create the muzzle effect itself
+    -- Create the muzzle effect itself
 	local AddVel = self.WeaponEnt:GetOwner():GetVelocity()
 	local emitter = ParticleEmitter(self.Position)
 	for i=1,2 do 
@@ -42,7 +42,7 @@ function EFFECT:Init(data)
 		particle:SetAirResistance(160)
 	end
 
-    // Create smoke from the muzzleflash
+    -- Create smoke from the muzzleflash
 	for i=1,3 do 
 		local particle = emitter:Add("particle/particle_smokegrenade", self.Position)
 		particle:SetVelocity(Vector(math.random(-20,20),math.random(-20,20),math.random(-20,20)))
@@ -56,7 +56,7 @@ function EFFECT:Init(data)
 		particle:SetAirResistance(140)
 	end
 	
-    // Kill the emitter
+    -- Kill the emitter
 	emitter:Finish()
 end
 

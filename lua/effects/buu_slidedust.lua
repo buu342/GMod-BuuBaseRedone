@@ -11,19 +11,19 @@ https://github.com/buu342/GMod-BuuBaseRedone
 -----------------------------*/
 
 function EFFECT:Init(data)
-    // Initialize the effect with the effect data
+    -- Initialize the effect with the effect data
 	self.Ent = data:GetEntity()
 	
-    // Store some variables with our position and direction
+    -- Store some variables with our position and direction
 	self.Position = data:GetOrigin()
 	self.Forward = data:GetNormal()
 	self.Angle = self.Forward:Angle()
 	self.Right = self.Angle:Right()
 	
-    // Ensure the player exists exists
+    -- Ensure the player exists exists
 	if (!IsValid(self.Ent) || self.Ent:GetOwner() == nil) then return end
 	
-    // Create the dust effect itself
+    -- Create the dust effect itself
 	local AddVel = self.Ent:GetVelocity()
 	local emitter = ParticleEmitter(self.Position)
     local particle = emitter:Add("particle/particle_smokegrenade", self.Position)
@@ -37,7 +37,7 @@ function EFFECT:Init(data)
     particle:SetColor(230, 200, 200)
     particle:SetAirResistance(140)
 
-    // Kill the emitter
+    -- Kill the emitter
 	emitter:Finish()
 end
 
