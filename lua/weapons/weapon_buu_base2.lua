@@ -89,7 +89,7 @@ SWEP.Primary.BurstFire        = false -- Burst fire (Requires Automatic = false)
 SWEP.Primary.BurstCount       = 3     -- Number of burst shots
 SWEP.Primary.BurstTime        = 0.075 -- Time between burst shots
 SWEP.Primary.CancelBurst      = true  -- Allow canceling burstfire early
-SWEP.Primary.DelayLastShot    = nil   -- Delay value to use when firing the last shot
+SWEP.Primary.DelayLastShot    = -1    -- Delay value to use when firing the last shot. -1 to not use
 
 SWEP.Secondary.Silenced         = false
 SWEP.Secondary.SoundChannelSwap = false 
@@ -97,12 +97,12 @@ SWEP.Secondary.BurstFire        = false
 SWEP.Secondary.BurstCount       = 3     
 SWEP.Secondary.BurstTime        = 0.075 
 SWEP.Secondary.CancelBurst      = true  
-SWEP.Secondary.DelayLastShot    = nil   
+SWEP.Secondary.DelayLastShot    = -1   
 
 
 /*==================== Ironsight Settings ===================*/
 
-SWEP.IronsightFOV   = 65 -- FOV when in ironsights
+SWEP.IronsightFOV   = 65 -- FOV when in ironsights (-1 to disable)
 SWEP.IronsightSway  = 2  -- Ironsight sway amount
 SWEP.IronsightSound = 2  -- Sound to play when ironsighting. None (0), pistol (1), smg (2), rifle (3)
 
@@ -121,7 +121,7 @@ SWEP.RunArmPos   = Vector(1.358, 1.228, -0.94)
 SWEP.RunArmAngle = Vector(-10.554, 34.167, -20)
 
 -- Crouching positions
-SWEP.CrouchPos = Vector(-1, -1,.5)
+SWEP.CrouchPos = Vector(-1, -1, .5)
 SWEP.CrouchAng = Vector(0, 0, 0)
 
 -- Use ACT_VM_PRIMARYATTACK in ironsights?
@@ -129,20 +129,20 @@ SWEP.UseNormalShootIron = true
 
 -- If above is false, it will use this as the animation. Just give it the 
 -- same value as your Ironsights but with the Y pushed back a bit to simulate
--- the gun going back when you shoot.
-SWEP.IronSightsShootPos = nil 
-SWEP.IronSightsShootAng = nil
+-- the gun going back when you shoot. -1 to not use.
+SWEP.IronSightsShootPos = -1 
+SWEP.IronSightsShootAng = -1
 
 
 /*====================== Reload Timers ======================*/
 
-SWEP.ReloadAmmoTime      = 0.7 -- When does the ammo appear in the mag? (percent of animation) (Set to nil to give ammo at the end of the animation)
-SWEP.ReloadAmmoTimeEmpty = nil -- When does the ammo appear in the mag when no ammo? (set to nil to use the time above)
+SWEP.ReloadAmmoTime      = 0.7 -- When does the ammo appear in the mag? (percent of animation) (Set to -1 to give ammo at the end of the animation)
+SWEP.ReloadAmmoTimeEmpty = -1  -- When does the ammo appear in the mag when no ammo? (set to -1 to use the time above)
 
 
 /*======================= Mag Dropping ======================*/
 
-SWEP.MagModel          = nil   -- The mag model to drop (nil to not use)
+SWEP.MagModel          = -1    -- The mag model to drop (-1 to not use)
 SWEP.MagEmptyBodygroup = 0     -- Which bodygroup to use if an empty mag is dropped
 SWEP.MagDropTime       = 0.5   -- When to drop mag model (percent of animation)
 
@@ -174,31 +174,31 @@ SWEP.ShotgunReloadAmount = 1     -- How many shells to reload at once
 
 /*=================== Animation Settings ===================*/
 
--- Normal animations. Use nil to not use any animation
+-- Normal animations. Use -1 to not use any animation
 SWEP.DrawAnim           = ACT_VM_DRAW               -- Draw
 SWEP.IdleAnim           = ACT_VM_IDLE               -- Idle
 SWEP.Primary.Anim       = ACT_VM_PRIMARYATTACK      -- Primaryfire
-SWEP.Primary.AnimIron   = nil                       -- Primaryfire + Ironsight
+SWEP.Primary.AnimIron   = -1                        -- Primaryfire + Ironsight
 SWEP.Secondary.Anim     = ACT_VM_PRIMARYATTACK      -- Secondaryfire
-SWEP.Secondary.AnimIron = nil                       -- Secondaryfire + Ironsight
+SWEP.Secondary.AnimIron = -1                        -- Secondaryfire + Ironsight
 SWEP.ReloadAnim         = ACT_VM_RELOAD             -- Reload
-SWEP.HolsterAnim        = nil                       -- Holster
+SWEP.HolsterAnim        = -1                        -- Holster
 SWEP.ReloadAnimSStart   = ACT_SHOTGUN_RELOAD_START  -- Shotgun reload start
 SWEP.ReloadAnimSEnd     = ACT_SHOTGUN_RELOAD_FINISH -- Shotgun reload end
-SWEP.ModeAnim           = nil                       -- Changing weapon mode
+SWEP.ModeAnim           = -1                        -- Changing weapon mode
 
 -- Empty animations (When you fire the last bullet)
-SWEP.DrawAnimEmpty           = nil
-SWEP.IdleAnimEmpty           = nil
-SWEP.Primary.AnimEmpty       = nil
-SWEP.Primary.AnimIronEmpty   = nil
-SWEP.Secondary.AnimEmpty     = nil
-SWEP.Secondary.AnimIronEmpty = nil
-SWEP.ReloadAnimEmpty         = nil
-SWEP.HolsterAnimEmpty        = nil
-SWEP.ReloadAnimSStartEmpty   = nil
-SWEP.ReloadAnimSEndEmpty     = nil
-SWEP.ModeAnimEmpty           = nil
+SWEP.DrawAnimEmpty           = -1
+SWEP.IdleAnimEmpty           = -1
+SWEP.Primary.AnimEmpty       = -1
+SWEP.Primary.AnimIronEmpty   = -1
+SWEP.Secondary.AnimEmpty     = -1
+SWEP.Secondary.AnimIronEmpty = -1
+SWEP.ReloadAnimEmpty         = -1
+SWEP.HolsterAnimEmpty        = -1
+SWEP.ReloadAnimSStartEmpty   = -1
+SWEP.ReloadAnimSEndEmpty     = -1
+SWEP.ModeAnimEmpty           = -1
 
 
 /*=============================================================
@@ -206,6 +206,17 @@ SWEP.ModeAnimEmpty           = nil
 =============================================================*/
 
 SWEP.IsBuuBase = true -- Don't touch
+
+
+/*-----------------------------
+    IsValidVariable
+    Helper function for checking if a variable is valid
+    @Param the variable to check
+-----------------------------*/
+
+local function IsValidVariable(var)
+    return (var != nil && var != -1 && var != NULL)
+end
 
 
 /*-----------------------------
@@ -254,7 +265,7 @@ function SWEP:PrecacheStuff()
     
     -- Precache all the models in that list
     for k, v in pairs(modelist) do
-        if (v != nil && v != "") then
+        if (IsValidVariable(v) && v != "") then
             util.PrecacheModel(v)
         end
     end
@@ -267,7 +278,7 @@ function SWEP:PrecacheStuff()
     
     -- Precache all the sounds in that list
     for k, v in pairs(soundlist) do
-        if (v != nil) then
+        if (IsValidVariable(v)) then
             if (istable(v)) then
                 for _, snd in pairs(v) do
                     util.PrecacheSound(snd)
@@ -311,6 +322,11 @@ function SWEP:Initialize()
 
     -- Precache all the weapon related stuff
     self:PrecacheStuff()
+    
+    -- Initialize the predicted TimeToScope variable
+    if (self.TimeToScope == nil) then
+        self.TimeToScope = 0
+    end
     
     -- Initialize clientside variables
     if (CLIENT) then
@@ -373,15 +389,14 @@ function SWEP:Deploy()
     local time = 0
     local anim = self.DrawAnim
 
-
     -- Decide the animation to use
-    if (self:Clip1() <= 0 && self.DrawAnimEmpty != nil) then 
+    if (self:Clip1() <= 0 && IsValidVariable(self.DrawAnimEmpty)) then 
         anim = self.DrawAnimEmpty
     end
     time = CurTime() + self.Owner:GetViewModel():SequenceDuration()
     
     -- If we have no animation, fallback to a safe value
-    if (anim == nil) then
+    if (!IsValidVariable(anim)) then
         anim = ACT_RESET
         time = 1
     end
@@ -426,7 +441,7 @@ function SWEP:Holster(holsterto)
     end
     
     -- If there's a holster animation, play it
-    if (self.HolsterAnim != nil && self:GetBuu_SpecialState() != -1 && IsValid(self.Owner:GetViewModel())) then
+    if (IsValidVariable(self.HolsterAnim) && self:GetBuu_SpecialState() != -1 && IsValid(self.Owner:GetViewModel())) then
         -- Don't allow if we're still mid firing or reload
         if (self:GetNextPrimaryFire() > CurTime() || self:GetBuu_Reloading()) then
             return false
@@ -435,7 +450,7 @@ function SWEP:Holster(holsterto)
         -- Set the animation
         local anim = self.HolsterAnim
         local animtime = 0
-        if (self.HolsterAnimEmpty != nil) then
+        if (IsValidVariable(self.HolsterAnimEmpty)) then
             anim = self.HolsterAnimEmpty
         end
         self:SendWeaponAnim(anim)
@@ -500,8 +515,8 @@ function SWEP:PrimaryAttack()
             self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..(self:GetBuu_FireMode()+1))
             
             -- Play an animation if we have one
-            if (self.ModeAnim != nil) then
-                if (self.ModeAnimEmpty != nil) then
+            if (IsValidVariable(self.ModeAnim)) then
+                if (IsValidVariable(self.ModeAnimEmpty)) then
                     anim = self.ModeAnimEmpty
                 end
                 self:SendWeaponAnim(anim)
@@ -544,7 +559,7 @@ function SWEP:PrimaryAttack()
     if (self:GetBuu_Reloading() || self:GetBuu_Sprinting() || self:GetBuu_NearWall() || self:GetBuu_OnLadder()) then return end
     
     -- Make sure we have a valid shoot mode
-    if (mode == nil) then return end
+    if (!IsValidVariable(mode)) then return end
     
     -- Enable lag compensation
     if (self.Owner:IsPlayer()) then
@@ -555,19 +570,20 @@ function SWEP:PrimaryAttack()
     self:ShootCode(mode)
     
     -- Do animations
+    -- TODO: Fix the logic here
     local anim = mode.Anim
-    if (self:Clip1()-1 <= 0 && (mode.AnimEmpty != nil || mode.AnimIronEmpty != nil)) then
-        if (self:GetBuu_Ironsights() && !self.UseNormalShootIron && mode.AnimIronEmpty != nil) then
+    if (self:Clip1()-1 <= 0 && (IsValidVariable(mode.AnimEmpty) || IsValidVariable(mode.AnimIronEmpty))) then
+        if (self:GetBuu_Ironsights() && !self.UseNormalShootIron && IsValidVariable(mode.AnimIronEmpty)) then
             anim = mode.AnimIronEmpty
-        elseif (mode.AnimEmpty != nil) then
+        elseif (IsValidVariable(mode.AnimEmpty)) then
             anim = mode.AnimEmpty
         end
-    elseif (self:GetBuu_Ironsights() && !self.UseNormalShootIron && mode.AnimIron != nil) then
+    elseif (self:GetBuu_Ironsights() && !self.UseNormalShootIron && IsValidVariable(mode.AnimIron)) then
         anim = mode.AnimIron
     end
 
     -- If we have no animation, fallback to a safe value
-    if (anim == nil) then
+    if (!IsValidVariable(anim)) then
         anim = ACT_RESET
     end
     
@@ -577,7 +593,7 @@ function SWEP:PrimaryAttack()
     self.Owner:SetAnimation(PLAYER_ATTACK1)
     
     -- Handle shooting sound channel
-    if (self.ShootChannel == nil) then
+    if (!IsValidVariable(self.ShootChannel)) then
         self.ShootChannel = CHAN_WEAPON
     end
     if (mode.SoundChannelSwap) then
@@ -589,7 +605,7 @@ function SWEP:PrimaryAttack()
     end
     
     -- Play the shooting sound
-    if (mode.Sound != nil) then
+    if (IsValidVariable(mode.Sound)) then
         local sound = mode.Sound
         if (istable(mode.Sound)) then
             sound = mode.Sound[math.random(1, #mode.Sound)]
@@ -612,6 +628,16 @@ function SWEP:PrimaryAttack()
         recoil = recoil/2
     end
     self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5, -2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1, 1)*recoil, 0))
+    
+    -- Change the owner's view angles permanantly
+    if ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted())) then
+        local eyeang = self.Owner:EyeAngles()
+        eyeang.pitch = eyeang.pitch - (self.Primary.Delay * 1 * 0.5)
+        eyeang.yaw = eyeang.yaw - (self.Primary.Delay * math.random(-1, 1) * 0.25)
+        self.Owner:SetEyeAngles( eyeang )
+    end
+    
+    -- Remove ammo from the clip
     self:TakePrimaryAmmo(mode.TakeAmmo or 1)
     
     -- Handle burst fire
@@ -625,12 +651,12 @@ function SWEP:PrimaryAttack()
     end
     
     -- Handle last shot delay
-    if (self:Clip1() == 0 && mode.DelayLastShot != nil) then
+    if (self:Clip1() == 0 && IsValidVariable(mode.DelayLastShot)) then
         delay = mode.DelayLastShot
     end
     
     -- If the delay is nil, fallback to a safe value
-    if (delay == nil) then
+    if (!IsValidVariable(delay)) then
         delay = 0.1
     end
     
@@ -678,7 +704,7 @@ function SWEP:Reload()
         local time = self.ReloadAmmoTime
         
         -- Decide if we're using empty animation stuff
-        if (self:Clip1() <= 0 && self.ReloadAnimEmpty != nil) then 
+        if (self:Clip1() <= 0 && IsValidVariable(self.ReloadAnimEmpty)) then 
             anim = self.ReloadAnimEmpty
             if (self.ReloadAmmoTimeEmpty != nil) then
                 time = self.ReloadAmmoTimeEmpty
@@ -686,7 +712,7 @@ function SWEP:Reload()
         end
         
         -- If we have no animation, then fallback to a safe value
-        if (anim == nil) then
+        if (!IsValidVariable(anim)) then
             anim = ACT_RESET
             time = 1
         end
@@ -700,12 +726,12 @@ function SWEP:Reload()
         self:SetBuu_BurstCount(0) 
         
         -- Drop a mag on the floor
-        if (GetConVar("cl_buu_magdrop"):GetBool() && self.MagModel != nil && self.MagModel != "") then
+        if (GetConVar("cl_buu_magdrop"):GetBool() && IsValidVariable(self.MagModel) && self.MagModel != "") then
             self:SetBuu_MagDropTime(CurTime()+self.Owner:GetViewModel():SequenceDuration()*self.MagDropTime)
         end
         
         -- Start the reload ammo timer
-        if (time == nil) then
+        if (!IsValidVariable(time)) then
             self:SetBuu_ReloadAmmoTime(self:GetBuu_GotoIdle()) 
         else
             self:SetBuu_ReloadAmmoTime(CurTime()+self.Owner:GetViewModel():SequenceDuration()*time)
@@ -765,17 +791,7 @@ function SWEP:Think()
     end
 
     -- Handle magazine drops
-    if (self:GetBuu_MagDropTime() != 0 && self:GetBuu_MagDropTime() < CurTime()) then
-        self:SetBuu_MagDropTime(0)
-        if (!game.SinglePlayer() && SERVER) then
-            net.Start("BuuBase_DropMag")
-                net.WriteEntity(self.Owner)
-                net.WriteEntity(self)
-            net.Broadcast()
-        else
-            MagazineDrop(nil, self.Owner, self)
-        end
-    end
+    self:HandleMagDropping()
         
     -- Handle holstering
     if (self:GetBuu_SpecialState() == -1 && self:GetBuu_StateTimer() < CurTime()) then
@@ -894,11 +910,6 @@ local ironsounds = {
     "rifle",
 }
 function SWEP:HandleIronsights()
-
-    -- Initialize the predicted TimeToScope variable
-    if (self.TimeToScope == nil) then
-        self.TimeToScope = 0
-    end
     
     -- Check if the player is ironsighting
     if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading()) then
@@ -1070,12 +1081,12 @@ function SWEP:HandleIdle()
         
         -- Set the idle animation
         local anim = self.IdleAnim
-        if (self:Clip1() <= 0 && self.IdleAnimEmpty != nil) then
+        if (self:Clip1() <= 0 && IsValidVariable(self.IdleAnimEmpty)) then
             anim = self.IdleAnimEmpty
         end
         
         -- If we have no animation, fallback to a safe value
-        if (anim == nil) then
+        if (!IsValidVariable(anim)) then
             anim = ACT_RESET
         end
         
@@ -1205,7 +1216,8 @@ local holdtypes = {
     ["shotgun"] = 5,
 }
 function SWEP:HandleHoldtypes(anim)
-    if (self.HoldType == nil) then return end
+    if (CLIENT && !IsFirstTimePredicted()) then return end
+    if (!IsValidVariable(self.HoldType)) then return end
     self:SetHoldType(holdanims[anim][holdtypes[self.HoldType]] or "normal")
     self:SetWeaponHoldType(self:GetHoldType())
 end
@@ -1259,10 +1271,11 @@ function SWEP:StartShotgunReload()
 
     -- Play the shotgun starting reload animation
     local anim = self.ReloadAnimSStart
-    if (self:Clip1() == 0 && self.ReloadAnimSStartEmpty != nil) then
+    if (self:Clip1() == 0 && IsValidVariable(self.ReloadAnimSStartEmpty)) then
         anim = self.ReloadAnimSStartEmpty
     end
     self:SendWeaponAnim(anim)
+    self.Owner:SetAnimation(PLAYER_RELOAD)
     
     -- Set us to a reload state
     self:SetBuu_Reloading(true)
@@ -1289,24 +1302,24 @@ function SWEP:DoShotgunReload()
     local time = self.ReloadAmmoTime
     
     -- Decide if we're using empty animation stuff
-    if (self:Clip1() == 0 && self.ReloadAnimEmpty != nil) then
+    if (self:Clip1() == 0 && IsValidVariable(self.ReloadAnimEmpty)) then
        anim = self.ReloadAnimEmpty
        time = self.ReloadAmmoTimeEmpty
     end
     
     -- Fallback if we don't have a valid animation
-    if (anim == nil) then
+    if (!IsValidVariable(anim)) then
         anim = ACT_RESET
         time = 1
     end
     
     -- Play the reload animation
     self:SendWeaponAnim(anim)
-    self.Owner:SetAnimation(PLAYER_RELOAD)
     self:SetBuu_StateTimer(CurTime()+self.Owner:GetViewModel():SequenceDuration())
+    self.Owner:SetAnimation(PLAYER_RELOAD)
     
     -- Start the reload ammo timer
-    if (time == nil) then
+    if (!IsValidVariable(time)) then
         self:SetBuu_ReloadAmmoTime(self:GetBuu_StateTimer()) 
     else
         self:SetBuu_ReloadAmmoTime(CurTime()+self.Owner:GetViewModel():SequenceDuration()*time)
@@ -1324,12 +1337,12 @@ function SWEP:FinishShotgunReload()
 
     -- Pick the shotgun ending animation
     local anim = self.ReloadAnimSEnd
-    if (self:Clip1() == 0 && self.ReloadAnimSEndEmpty != nil) then
+    if (self:Clip1() == 0 && IsValidVariable(self.ReloadAnimSEndEmpty)) then
         anim = self.ReloadAnimSEndEmpty
     end
     
     -- Fallback if we don't have a valid animation
-    if (anim == nil) then
+    if (!IsValidVariable(anim)) then
         anim = ACT_RESET
     end
     
@@ -1343,6 +1356,25 @@ function SWEP:FinishShotgunReload()
     self:SetBuu_GotoIdle(CurTime()+self.Owner:GetViewModel():SequenceDuration())
 end
 
+
+/*-----------------------------
+    HandleMagDropping
+    Handles magazine dropping logic
+-----------------------------*/
+
+function SWEP:HandleMagDropping()
+    if (self:GetBuu_MagDropTime() != 0 && self:GetBuu_MagDropTime() < CurTime()) then
+        self:SetBuu_MagDropTime(0)
+        if (SERVER) then
+            net.Start("BuuBase_DropMag")
+                net.WriteEntity(self.Owner)
+                net.WriteEntity(self)
+            net.Broadcast()
+        elseif (!game.SinglePlayer()) then
+            MagazineDrop(nil, self.Owner, self)
+        end
+    end
+end
 
 /*-----------------------------
     MagazineDrop
@@ -1361,7 +1393,7 @@ function MagazineDrop(len, ply, wep)
             wep = net.ReadEntity()
             
             -- Discard it if we received one that mentions us
-            if (ply == LocalPlayer()) then
+            if (ply == LocalPlayer() && !game.SinglePlayer()) then
                 return
             end
         end
@@ -1444,7 +1476,7 @@ function SWEP:FireAnimationEvent(pos, ang, event)
         end
         
         -- If we have no effect, then stop
-        if (effect == nil) then
+        if (IsValidVariable(effect)) then
             return false
         end
         
@@ -1755,7 +1787,7 @@ if (CLIENT) then
         --------------------------------------------*/
         
         local maxroll = 30 -- How much to roll the gun when going into ironsights
-        if (self:GetBuu_Ironsights() && !self:GetBuu_Reloading()) then
+        if (self:GetBuu_Ironsights() && !self:GetBuu_Reloading() && IsValidVariable(self.IronSightsPos)) then
             local targettime = 0
             
             -- If just fired, reset the shooting animation timer
@@ -1765,7 +1797,7 @@ if (CLIENT) then
             end
         
             -- If we just fired, handle ironsight shooting animations
-            if (ironfiretime > CurTime() && !self.UseNormalShootIron && self.IronSightsShootPos != nil) then
+            if (ironfiretime > CurTime() && !self.UseNormalShootIron && IsValidVariable(self.IronSightsShootPos)) then
                 TargetVector = self.IronSightsPos + (self.IronSightsShootPos-self.IronSightsPos)
             else
                 TargetVector = self.IronSightsPos
@@ -1784,7 +1816,7 @@ if (CLIENT) then
             -- Lower the gun if on a ladder
             TargetVector = Vector(0, 0, 2)
             TargetVectorAngle = Vector(-40, 0, 0)
-        elseif (self:GetBuu_Sprinting() && !self:GetBuu_Reloading() && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner:GetNWBool("Buu_Sliding") && !GetConVar("sv_buu_slideshoot"):GetBool()))) then 
+        elseif (self:GetBuu_Sprinting() && IsValidVariable(self.RunArmPos) && !self:GetBuu_Reloading() && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner:GetNWBool("Buu_Sliding") && !GetConVar("sv_buu_slideshoot"):GetBool()))) then 
             
             -- Do the sprinting and/or sliding animation
             TargetVector = self.RunArmPos
@@ -1794,7 +1826,7 @@ if (CLIENT) then
             -- Tilt the viewmodel if we're sliding
             TargetVector = Vector(0, 0, 0)
             TargetVectorAngle = Vector(0, 0, 20)   
-        elseif (self:GetBuu_NearWall() && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading())) then 
+        elseif (self:GetBuu_NearWall() && IsValidVariable(self.RunArmPos) && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading())) then 
         
             -- Do "Near Wall" animation
             TargetVector = self.RunArmPos
@@ -2006,7 +2038,7 @@ if (CLIENT) then
                 m_PlayerCam.angles = angles
                 m_PlayerCam.fov = myfov
                 myfov = Lerp(10*FrameTime(),myfov,myfov_t)
-                if (ply:GetActiveWeapon():GetBuu_Ironsights()) then
+                if (ply:GetActiveWeapon():GetBuu_Ironsights() && IsValidVariable(ply:GetActiveWeapon().IronsightFOV)) then
                     myfov_t = ply:GetActiveWeapon().IronsightFOV
                 else 
                     myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
@@ -2033,7 +2065,7 @@ if (CLIENT) then
     local function BuuBase_HideViewModelScope(vm, ply, wep)
     
         -- If we're holding a buu weapon
-        if (wep.IsBuuBase) then
+        if (wep.IsBuuBase) then        
             if (wep.Sniper && wep.TimeToScope < UnPredictedCurTime() && wep:GetBuu_Ironsights()) then
                 vm:SetRenderMode(RENDERMODE_TRANSCOLOR)
                 vm:SetColor(Color(255, 255, 255, 1))
@@ -2233,7 +2265,7 @@ if (CLIENT) then
         end
         
         -- If the flashlight is enabled
-        if (self:GetBuu_UsingFlashlight()) && self.Owner:GetViewModel(0) == vm then
+        if (self:GetBuu_UsingFlashlight() && self.Owner:GetViewModel(0) == vm && self.CustomFlashlight) then
             -- Make sure we can attach to the muzzle
             local attach = self:HandleMuzzleAttachmentHelper(vm)
             if (attach == nil) then return end
@@ -2305,7 +2337,7 @@ if (CLIENT) then
                 end
                 
                 -- If we're using the flashlight
-                if (wep:GetBuu_UsingFlashlight()) then
+                if (wep:GetBuu_UsingFlashlight() && wep.CustomFlashlight) then
                     local pos, ang = wep:GetBoneOrientation(v, "ValveBiped.Bip01_R_Hand")
                     
                     -- If the positions are invalid, stop
@@ -2491,4 +2523,21 @@ if (CLIENT) then
         -- Draw the rest of the weapon info
         self:PrintWeaponInfo(x+w+20, y+h*0.95, alpha)
     end
+    
+ 
+    /*-----------------------------
+        Buu_StopThirdpersonSounds
+        Stops thirdperson reload animation sounds from playing
+        @Param The player that triggered the event
+        @Param Where the event is ocurring
+        @Param The angle where the event is ocurring
+        @Param The event number
+    -----------------------------*/ 
+
+    local function Buu_StopThirdpersonSounds(ply, pos, ang, event)
+        if (ply:GetActiveWeapon() != nil && IsValid(ply:GetActiveWeapon()) && ply:GetActiveWeapon().IsBuuBase && event == 15) then
+            return true
+        end
+    end
+    hook.Add("PlayerFireAnimationEvent", "Buu_StopThirdpersonSounds", Buu_StopThirdpersonSounds)
 end
