@@ -186,6 +186,9 @@ SWEP.HolsterAnim        = -1                        -- Holster
 SWEP.ReloadAnimSStart   = ACT_SHOTGUN_RELOAD_START  -- Shotgun reload start
 SWEP.ReloadAnimSEnd     = ACT_SHOTGUN_RELOAD_FINISH -- Shotgun reload end
 SWEP.ModeAnim           = -1                        -- Changing weapon mode
+SWEP.IronsightInAnim    = -1                        -- Ironsight in
+SWEP.IronsightOutAnim   = -1                        -- Ironsight out
+SWEP.PlayFullIronAnim   = true                      -- Play the full ironsight animation (if it exists) before showing the allowing to shoot?
 
 -- Empty animations (When you fire the last bullet)
 SWEP.DrawAnimEmpty           = -1
@@ -467,14 +470,14 @@ function SWEP:Holster(holsterto)
     -- If we're in holster state, only allow to switch when the timer is done
     if (self:GetBuu_SpecialState() == -1) then
         if (self:GetBuu_StateTimer() < CurTime()) then
-            self:Cleanup()
+            self:Cleanup(holsterto)
             return true
         end
         return false
     end
     
     -- Clean up the flashlight and viewmodel color if we were removed suddenly
-    self:Cleanup()
+    self:Cleanup(holsterto)
     
     -- otherwise, allow holstering
     return true
@@ -692,7 +695,7 @@ function SWEP:Reload()
     
     -- If we are missing bullets, and we aren't reloading already
     if (self:Clip1() < self:GetMaxClip1() && !self:GetBuu_Reloading()) then 
-    
+        
         -- If we're a shotgun, do a shotgun reload instead
         if (self.Shotgun) then
             self:StartShotgunReload()
@@ -706,7 +709,7 @@ function SWEP:Reload()
         -- Decide if we're using empty animation stuff
         if (self:Clip1() <= 0 && IsValidVariable(self.ReloadAnimEmpty)) then 
             anim = self.ReloadAnimEmpty
-            if (self.ReloadAmmoTimeEmpty != nil) then
+            if (IsValidVariable(self.ReloadAmmoTimeEmpty)) then
                 time = self.ReloadAmmoTimeEmpty
             end
         end
@@ -913,7 +916,7 @@ function SWEP:HandleIronsights()
     
     -- Check if the player is ironsighting
     if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading()) then
-        if (!self:GetBuu_Ironsights()) then
+        if (!self:GetBuu_Ironsights() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
         
             -- Start the Lua scope animation
             if (self.TimeToScope < UnPredictedCurTime()) then
@@ -929,6 +932,17 @@ function SWEP:HandleIronsights()
                 if (ironsounds[self.IronsightSound] != nil) then
                     self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1, 5))..".wav", 40, 100, 1, CHAN_VOICE2) 
                 end
+                
+                -- If we have an ironsight animation, play it
+                if (IsValidVariable(self.IronsightInAnim)) then
+                    self:SendWeaponAnim(self.IronsightInAnim)
+                    if (self.PlayFullIronAnim) then
+                        local time = self.Owner:GetViewModel():SequenceDuration()
+                        self.TimeToScope = UnPredictedCurTime()+time
+                        self:SetBuu_TimeToScope(CurTime()+time)
+                        self:SetNextPrimaryFire(CurTime()+time)
+                    end
+                end
             end
         end
         
@@ -936,7 +950,7 @@ function SWEP:HandleIronsights()
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
             self.Owner:SetFOV(self.SniperZoom, 0)
         end
-    else
+    elseif (!self.PlayFullIronAnim || self:GetBuu_TimeToScope() < CurTime()) then
         -- Stop ironsighting if it's on
         if (self:GetBuu_Ironsights()) then
             self:SetBuu_Ironsights(false)
@@ -945,6 +959,14 @@ function SWEP:HandleIronsights()
             if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
                 if (ironsounds[self.IronsightSound] != nil) then
                     self:EmitSound("buu/base/ironsight_"..ironsounds[self.IronsightSound]..tostring(math.random(1, 5))..".wav", 40, 100, 1, CHAN_VOICE2) 
+                end
+            end
+            
+            -- If we have an ironsight animation, play it
+            if (IsValidVariable(self.IronsightOutAnim)) then
+                self:SendWeaponAnim(self.IronsightOutAnim)
+                if (self.PlayFullIronAnim) then
+                    self:SetNextPrimaryFire(CurTime()+self.Owner:GetViewModel():SequenceDuration())
                 end
             end
         end
@@ -1304,7 +1326,9 @@ function SWEP:DoShotgunReload()
     -- Decide if we're using empty animation stuff
     if (self:Clip1() == 0 && IsValidVariable(self.ReloadAnimEmpty)) then
        anim = self.ReloadAnimEmpty
-       time = self.ReloadAmmoTimeEmpty
+       if (IsValidVariable(self.ReloadAmmoTimeEmpty)) then
+            time = self.ReloadAmmoTimeEmpty
+        end
     end
     
     -- Fallback if we don't have a valid animation
@@ -1431,9 +1455,10 @@ net.Receive("BuuBase_DropMag", MagazineDrop)
     Cleanup
     Fixes anything due to suddenly being removed, like
     flashlight and viewmodel colors
+    @Param the weapon we're holstering to (if relevant)
 -----------------------------*/
 
-function SWEP:Cleanup()
+function SWEP:Cleanup(holsterto)
     if self.Owner == nil then return end
 
     -- If the player is using the flashlight
@@ -1446,7 +1471,7 @@ function SWEP:Cleanup()
         end
         
         -- Enable flashlight on the next tick
-        if (SERVER) then
+        if (SERVER && holsterto != nil && !holsterto.IsBuuBase) then
             timer.Simple(0, function() if (IsValid(self) && IsValid(self.Owner) && self.Owner:Alive()) then self.Owner:Flashlight(true) end end)
         end
     end
