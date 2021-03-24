@@ -102,9 +102,10 @@ SWEP.Secondary.DelayLastShot    = -1
 
 /*==================== Ironsight Settings ===================*/
 
-SWEP.IronsightFOV   = 65 -- FOV when in ironsights (-1 to disable)
-SWEP.IronsightSway  = 2  -- Ironsight sway amount
-SWEP.IronsightSound = 2  -- Sound to play when ironsighting. None (0), pistol (1), smg (2), rifle (3)
+SWEP.IronsightFOV   = 65   -- FOV when in ironsights (-1 to disable)
+SWEP.IronsightSway  = 2    -- Ironsight sway amount
+SWEP.IronsightSound = 2    -- Sound to play when ironsighting. None (0), pistol (1), smg (2), rifle (3)
+SWEP.IronsightRoll  = true -- Subtly roll the weapon when going into ironsights
 
 
 /*================= Lua Viewmodel Animations ================*/
@@ -1001,6 +1002,13 @@ function SWEP:HandleIronsights()
                 self.Owner:SetFOV(0, 0)
             end
             
+            -- Fix a bug where sometimes self.TimeToScope isn't changed in singleplayer
+            if (game.SinglePlayer() && SERVER) then
+                net.Start("BuuBase_NetworkIronsightSingleplayer")
+                    net.WriteFloat(0)
+                net.Send(self.Owner)
+            end
+            
             -- If we have an ironsight animation, play it
             if (IsValidVariable(self.IronsightOutAnim) && !self:GetBuu_Reloading()) then
                 self:SendWeaponAnim(self.IronsightOutAnim)
@@ -1855,7 +1863,7 @@ if (CLIENT) then
             
             -- Calculate the time to perform the rolling animation
             ironsighttime = Lerp(10*FrameTime(), ironsighttime+1, maxroll)
-            if (GetConVar("cl_buu_ironsightrolling"):GetBool()) then
+            if (GetConVar("cl_buu_ironsightrolling"):GetBool() && self.IronsightRoll) then
                 targettime = (-(ironsighttime-(maxroll/2))^2 + (maxroll/2)^2)/(maxroll/2) -- Parabolas! Thank you https://www.desmos.com for some nice visuals.
             end
             
