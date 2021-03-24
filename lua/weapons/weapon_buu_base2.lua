@@ -52,7 +52,7 @@ SWEP.Primary.Automatic   = true
 SWEP.Primary.Ammo        = "smg1"
 
 -- Secondary Fire Mode
-SWEP.Secondary.Sound       = ""
+SWEP.Secondary.Sound       = -1
 SWEP.Secondary.ClipSize    = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic   = false 
@@ -68,6 +68,9 @@ SWEP.CrosshairType = 1                           -- None (0), Normal (1), Sniper
 SWEP.EmptySound    = Sound("buu/base/empty.wav") -- Empty firing sound
 SWEP.MuzzleEffect  = "buu_muzzle"                -- Muzzleflash
 SWEP.MuzzleEffectS = "buu_muzzle_silenced"       -- Silenced muzzleflash
+
+SWEP.LowAmmoWarnSound = -1 -- The sound to play to warn us when we're low ammo (-1 to not use) (Make sure to cache it with Sound(""))
+SWEP.LowAmmoWarnClip  = 10 -- How much ammo left in the clip for the above sound to play?
 
 SWEP.CanIronsight     = true -- Allow using ironsights? (Not needed for snipers)
 SWEP.CanSprint        = true -- Allow sprinting to holster the weapon?
@@ -164,6 +167,9 @@ SWEP.AllowBreath     = true             -- Allow pressing ALT to hold breath (wh
 SWEP.SniperZoom      = 30               -- How much FOV zoom
 SWEP.ScopeScale      = 0.5              -- How much percent of the screen does the sniper scope take up
 SWEP.SniperTexture   = "scope/fc3Scope" -- Scope texture
+
+SWEP.ScopeEnterSound = -1 -- The sound to play when we enter the scope (-1 to not use) (Make sure to cache it with Sound(""))
+SWEP.ScopeExitSound  = -1 -- The sound to play when we exit the scope (-1 to not use) (Make sure to cache it with Sound(""))
 
 
 /*===================== Shotgun Settings ===================*/
@@ -278,6 +284,10 @@ function SWEP:PrecacheStuff()
     local soundlist = {
         self.Primary.Sound,
         self.Secondary.Sound,
+        self.EmptySound,
+        self.LowAmmoWarnSound, 
+        self.ScopeEnterSound, 
+        self.ScopeExitSound, 
     }
     
     -- Precache all the sounds in that list
@@ -554,7 +564,7 @@ function SWEP:PrimaryAttack()
     
     -- Play empty sound if we're out of ammo
     if (self:Clip1() == 0) then 
-        self:EmitSound("weapons/shotgun/shotgun_empty.wav", 40, 100, 1, CHAN_ITEM)
+        self:EmitSound(self.EmptySound, 40, 100, 1, CHAN_ITEM)
         self:SetNextPrimaryFire(CurTime() + 0.2)
         return 
     end 
@@ -653,6 +663,11 @@ function SWEP:PrimaryAttack()
     
     -- Remove ammo from the clip
     self:TakePrimaryAmmo(mode.TakeAmmo or 1)
+    
+    -- Low ammo warning sound
+    if (IsValidVariable(self.LowAmmoWarnSound) && self:Clip1() == self.LowAmmoWarnClip) then
+        self:EmitSound(self.LowAmmoWarnSound, 50, 100, 1, CHAN_ITEM+1)
+    end
     
     -- Handle burst fire
     local delay = mode.Delay
@@ -936,6 +951,7 @@ local ironsounds = {
     "smg",
     "rifle",
 }
+SWEP.PlayedScopeSound = false
 function SWEP:HandleIronsights()
     
     -- Check if the player is ironsighting
@@ -943,7 +959,7 @@ function SWEP:HandleIronsights()
         if (!self:GetBuu_Ironsights()) then
         
             -- Start the Lua scope animation
-            if (self.TimeToScope < UnPredictedCurTime()) then
+            if (self.TimeToScope < UnPredictedCurTime() && (SERVER || IsFirstTimePredicted())) then
                 self.TimeToScope = UnPredictedCurTime()+0.15
             end
             self:SetBuu_TimeToScope(CurTime()+0.15)
@@ -981,6 +997,10 @@ function SWEP:HandleIronsights()
         -- Set the FOV if the scoping animation is finished
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
             self.Owner:SetFOV(self.SniperZoom, 0)
+            if (IsValidVariable(self.ScopeEnterSound) && !self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
+                self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2) 
+                self.PlayedScopeSound = true
+            end
         end
     else
 
@@ -996,9 +1016,15 @@ function SWEP:HandleIronsights()
             end
             
             -- Reset the ironsight variables and FOV
-            self.TimeToScope = 0
+            if (SERVER || IsFirstTimePredicted()) then
+                self.TimeToScope = 0
+            end
             self:SetBuu_TimeToScope(0)
             if (self.Sniper) then
+                if (IsValidVariable(self.ScopeExitSound) && self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
+                    self:EmitSound(self.ScopeExitSound, 40, 100, 1, CHAN_VOICE2) 
+                    self.PlayedScopeSound = false
+                end
                 self.Owner:SetFOV(0, 0)
             end
             
