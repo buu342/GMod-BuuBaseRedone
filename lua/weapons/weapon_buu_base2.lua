@@ -1485,7 +1485,7 @@ function MagazineDrop(len, ply, wep)
         mag:SetAngles(ply:GetAngles())
         mag:SetModel(wep.MagModel)
         if (wep:Clip1() == 0) then
-            mag:SetBodygroup(0, wep.MagEmptyBodygroup)
+            mag:SetBodygroup(1, wep.MagEmptyBodygroup)
         end
         
         -- Spawn it and enable physics
@@ -1517,6 +1517,12 @@ net.Receive("BuuBase_DropMag", MagazineDrop)
 
 function SWEP:Cleanup(holsterto)
     if self.Owner == nil then return end
+    
+    if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel() != nil) then
+        for i=0, 9 do
+            self.Owner:GetViewModel():SetBodygroup(i, 0)
+        end
+    end
 
     -- If the player is using the flashlight
     if (self:GetBuu_UsingFlashlight()) then
