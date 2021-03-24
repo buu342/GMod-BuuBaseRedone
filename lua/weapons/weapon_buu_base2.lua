@@ -188,7 +188,7 @@ SWEP.ReloadAnimSEnd     = ACT_SHOTGUN_RELOAD_FINISH -- Shotgun reload end
 SWEP.ModeAnim           = -1                        -- Changing weapon mode
 SWEP.IronsightInAnim    = -1                        -- Ironsight in
 SWEP.IronsightOutAnim   = -1                        -- Ironsight out
-SWEP.PlayFullIronAnim   = true                      -- Play the full ironsight animation (if it exists) before showing the allowing to shoot?
+SWEP.PlayFullIronAnim   = false                     -- Play the full ironsight animation (if it exists) before showing the allowing to shoot?
 
 -- Empty animations (When you fire the last bullet)
 SWEP.DrawAnimEmpty           = -1
@@ -337,8 +337,8 @@ function SWEP:Initialize()
         self.LandTime = 0
         
         -- We need to get these so we can scale everything to the player's current resolution.
-        local iScreenWidth = surface.ScreenWidth()
-        local iScreenHeight = surface.ScreenHeight()
+        local iScreenWidth = ScrW()
+        local iScreenHeight = ScrH()
         
         -- Helper table for drawing the scope
         local ScopeTable = {}
@@ -632,6 +632,16 @@ function SWEP:PrimaryAttack()
     end
     self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5, -2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1, 1)*recoil, 0))
     
+    -- If we're not using an autosniper, unscope
+    if (self.Sniper && !self.AutoSniper && self:GetBuu_Ironsights()) then
+        self:SetBuu_Ironsights(false)
+        self.TimeToScope = 0
+        self:SetBuu_TimeToScope(0)
+        if (self.Sniper) then
+            self.Owner:SetFOV(0, 0)
+        end
+    end
+    
     -- Change the owner's view angles permanantly
     if ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted())) then
         local eyeang = self.Owner:EyeAngles()
@@ -692,6 +702,7 @@ end
 function SWEP:Reload()
     if (self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) <= 0) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
+    if (!self:ConfirmReload()) then return end
     
     -- If we are missing bullets, and we aren't reloading already
     if (self:Clip1() < self:GetMaxClip1() && !self:GetBuu_Reloading()) then 
@@ -902,6 +913,18 @@ end
 
 
 /*-----------------------------
+    ConfirmReload
+    Extra checks to do before allowing a reload
+    For developers
+    @Returns Whether to allow reloading or not
+-----------------------------*/
+
+function SWEP:ConfirmReload()
+    return true
+end
+
+
+/*-----------------------------
     HandleIronsights
     Handles ironsight logic
 -----------------------------*/
@@ -915,15 +938,15 @@ local ironsounds = {
 function SWEP:HandleIronsights()
     
     -- Check if the player is ironsighting
-    if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading()) then
-        if (!self:GetBuu_Ironsights() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
+    if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
+        if (!self:GetBuu_Ironsights()) then
         
             -- Start the Lua scope animation
             if (self.TimeToScope < UnPredictedCurTime()) then
                 self.TimeToScope = UnPredictedCurTime()+0.15
             end
             self:SetBuu_TimeToScope(CurTime()+0.15)
-            
+
             -- Allow ironsights if they're enabled serverside, or if a sniper is being used
             if ((GetConVar("sv_buu_ironsights"):GetBool() && self.CanIronsight) || self.Sniper) then
                 self:SetBuu_Ironsights(true)
@@ -941,8 +964,16 @@ function SWEP:HandleIronsights()
                         self.TimeToScope = UnPredictedCurTime()+time
                         self:SetBuu_TimeToScope(CurTime()+time)
                         self:SetNextPrimaryFire(CurTime()+time)
+                        self:SetBuu_GotoIdle(0)
                     end
                 end
+            end
+            
+            -- Fix a bug where sometimes self.TimeToScope isn't changed in singleplayer
+            if (game.SinglePlayer() && SERVER) then
+                net.Start("BuuBase_NetworkIronsightSingleplayer")
+                    net.WriteFloat(self.TimeToScope)
+                net.Send(self.Owner)
             end
         end
         
@@ -950,9 +981,10 @@ function SWEP:HandleIronsights()
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
             self.Owner:SetFOV(self.SniperZoom, 0)
         end
-    elseif (!self.PlayFullIronAnim || self:GetBuu_TimeToScope() < CurTime()) then
+    else
+
         -- Stop ironsighting if it's on
-        if (self:GetBuu_Ironsights()) then
+        if (self:GetBuu_Ironsights() && (!self.PlayFullIronAnim || (self:GetBuu_TimeToScope() < CurTime() && self:GetNextPrimaryFire() < CurTime()))) then
             self:SetBuu_Ironsights(false)
             
             -- Play the ironsight sound
@@ -962,30 +994,20 @@ function SWEP:HandleIronsights()
                 end
             end
             
+            -- Reset the ironsight variables and FOV
+            self.TimeToScope = 0
+            self:SetBuu_TimeToScope(0)
+            if (self.Sniper) then
+                self.Owner:SetFOV(0, 0)
+            end
+            
             -- If we have an ironsight animation, play it
-            if (IsValidVariable(self.IronsightOutAnim)) then
+            if (IsValidVariable(self.IronsightOutAnim) && !self:GetBuu_Reloading()) then
                 self:SendWeaponAnim(self.IronsightOutAnim)
                 if (self.PlayFullIronAnim) then
                     self:SetNextPrimaryFire(CurTime()+self.Owner:GetViewModel():SequenceDuration())
                 end
             end
-        end
-        
-        -- Reset the ironsight variables and FOV
-        self.TimeToScope = 0
-        self:SetBuu_TimeToScope(0)
-        if (self.Sniper) then
-            self.Owner:SetFOV(0, 0)
-        end
-    end
-    
-    -- If we're not using an autosniper, and we can't shoot, unscope
-    if (self.Sniper && !self.AutoSniper && CurTime() < self:GetNextPrimaryFire() && self:GetBuu_Ironsights()) then
-        self:SetBuu_Ironsights(false)
-        self.TimeToScope = 0
-        self:SetBuu_TimeToScope(0)
-        if (self.Sniper) then
-            self.Owner:SetFOV(0, 0)
         end
     end
 end
@@ -1400,6 +1422,7 @@ function SWEP:HandleMagDropping()
     end
 end
 
+
 /*-----------------------------
     MagazineDrop
     Drops a clientsided magazine on the floor
@@ -1532,6 +1555,7 @@ function SWEP:GetBoneOrientation(ent, bonename)
     local pos, ang = Vector(0, 0, 0), Angle(0, 0, 0)
 
     -- Make sure the bone exists
+    if (ent == nil) then return nil, nil end
     if (!ent:LookupBone(bonename)) then return nil, nil end
     
     -- Get the bone matrix and get its data,
@@ -1687,6 +1711,7 @@ hook.Add("CalcMainActivity", "BuuBase_Sliding_Thirdperson", BuuBase_Sliding_Thir
 if (SERVER) then
     util.AddNetworkString("BuuBase_StartedSliding")
     util.AddNetworkString("BuuBase_DropMag")
+    util.AddNetworkString("BuuBase_NetworkIronsightSingleplayer")
 
     
     /*-----------------------------
@@ -2395,6 +2420,41 @@ if (CLIENT) then
         end
     end
     hook.Add("PostDrawTranslucentRenderables", "BuuBase_ThirdPersonLaser", BuuBase_ThirdPersonRendering)   
+    
+    
+    /*-----------------------------
+        BuuBase_NetworkIronsightSingleplayer
+        Fixes a bug with ironsight time in Singleplayer
+        @param The length of incoming network data
+        @param The player to check
+    -----------------------------*/
+    
+    local function BuuBase_NetworkIronsightSingleplayer(len, ply)
+        local time = net.ReadFloat()
+        if (LocalPlayer():GetActiveWeapon() != nil) then
+            LocalPlayer():GetActiveWeapon().TimeToScope = time
+        end
+    end
+    net.Receive("BuuBase_NetworkIronsightSingleplayer", BuuBase_NetworkIronsightSingleplayer)
+
+
+    /*-----------------------------
+        PreDrawScope
+        Allows extra stuff before drawing the scope
+        For developers to use
+    -----------------------------*/
+
+    function SWEP:PreDrawScope()
+    end
+    
+    /*-----------------------------
+        PostDrawScope
+        Allows extra stuff before drawing the scope
+        For developers to use
+    -----------------------------*/
+
+    function SWEP:PostDrawScope()
+    end
 
     
     /*-----------------------------
@@ -2411,6 +2471,10 @@ if (CLIENT) then
     
         -- Draw the sniper scope in using it, or the crosshair if not
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self:GetBuu_Ironsights()) then
+        
+            -- Draw extra stuff first
+            self:PreDrawScope()
+        
             -- Draw the scope texture
             surface.SetDrawColor(0, 0, 0, 255)
             surface.SetTexture(surface.GetTextureID(self.SniperTexture))
@@ -2422,6 +2486,9 @@ if (CLIENT) then
             surface.DrawRect(self.QuadTable.x2 - 2.5, self.QuadTable.y2 - 2.5, self.QuadTable.w2 + 5, self.QuadTable.h2 + 5)
             surface.DrawRect(self.QuadTable.x3 - 2.5, self.QuadTable.y3 - 2.5, self.QuadTable.w3 + 5, self.QuadTable.h3 + 5)
             surface.DrawRect(self.QuadTable.x4 - 2.5, self.QuadTable.y4 - 2.5, self.QuadTable.w4 + 5, self.QuadTable.h4 + 5)
+            
+            -- Draw extra stuff after
+            self:PostDrawScope()
         elseif (GetConVar("sv_buu_crosshair"):GetInt() == 1 && !self:GetBuu_Ironsights() && !self:GetBuu_NearWall() && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_Reloading()) then
             self.DrawCrosshair = false
             if (self.CrosshairType == 0) then return end
