@@ -1518,7 +1518,7 @@ net.Receive("BuuBase_DropMag", MagazineDrop)
 function SWEP:Cleanup(holsterto)
     if self.Owner == nil then return end
     
-    if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel() != nil) then
+    if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel() != nil && IsValid(self.Owner:GetViewModel())) then
         for i=0, 9 do
             self.Owner:GetViewModel():SetBodygroup(i, 0)
         end
