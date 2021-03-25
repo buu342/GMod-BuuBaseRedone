@@ -998,7 +998,7 @@ function SWEP:HandleIronsights()
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
             self.Owner:SetFOV(self.SniperZoom, 0)
             if (IsValidVariable(self.ScopeEnterSound) && !self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
-                self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2) 
+                self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2+2) 
                 self.PlayedScopeSound = true
             end
         end
@@ -1022,7 +1022,7 @@ function SWEP:HandleIronsights()
             self:SetBuu_TimeToScope(0)
             if (self.Sniper) then
                 if (IsValidVariable(self.ScopeExitSound) && self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
-                    self:EmitSound(self.ScopeExitSound, 40, 100, 1, CHAN_VOICE2) 
+                    self:EmitSound(self.ScopeExitSound, 40, 100, 1, CHAN_VOICE2+2) 
                     self.PlayedScopeSound = false
                 end
                 self.Owner:SetFOV(0, 0)
@@ -1281,7 +1281,7 @@ end
 
 -- Initialize the lookup tables
 local holdanims = {
-    ["idle"] = {"pistol", "pistol", "pistol", "crossbow", "crossbow"},
+    ["idle"] = {"pistol", "pistol", "pistol", "shotgun", "shotgun"},
     ["aim"] = {"revolver", "revolver", "smg", "ar2", "ar2"},
     ["reload"] = {"pistol", "revolver", "smg", "ar2", "shotgun"},
     ["holster"] = {"normal", "normal", "normal", "passive", "passive"},
@@ -2155,21 +2155,23 @@ if (CLIENT) then
     local function BuuBase_HideViewModelScope(vm, ply, wep)
     
         -- If we're holding a buu weapon
-        if (wep.IsBuuBase) then        
-            if (wep.Sniper && wep.TimeToScope < UnPredictedCurTime() && wep:GetBuu_Ironsights()) then
-                vm:SetRenderMode(RENDERMODE_TRANSCOLOR)
-                vm:SetColor(Color(255, 255, 255, 1))
-            
-                -- Remove the flashlight if it exists
-                if (vm.FlashLight != nil) then
-                    vm.FlashLight:Remove()
-                    vm.FlashLight = nil
-                end
+        if (wep.IsBuuBase) then      
+            if (wep.Sniper) then
+                if (wep.TimeToScope < UnPredictedCurTime() && wep:GetBuu_Ironsights()) then
+                    vm:SetRenderMode(RENDERMODE_TRANSCOLOR)
+                    vm:SetColor(Color(255, 255, 255, 1))
                 
-                -- Prevent drawing the VM normally
-                return true
-            else
-                ply.FixViewmodelColor = true
+                    -- Remove the flashlight if it exists
+                    if (vm.FlashLight != nil) then
+                        vm.FlashLight:Remove()
+                        vm.FlashLight = nil
+                    end
+                    
+                    -- Prevent drawing the VM normally
+                    return true
+                else
+                    ply.FixViewmodelColor = true
+                end
             end
         end
         
