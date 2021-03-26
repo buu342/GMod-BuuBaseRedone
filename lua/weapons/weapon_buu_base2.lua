@@ -2101,8 +2101,8 @@ if (CLIENT) then
     -----------------------------*/
     
     -- Initialize constants
-    local myfov = LocalPlayer():GetInfoNum("fov_desired", 90)
-    local myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
+    local myfov = nil
+    local myfov_t = nil
     local function BuuBase_CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
         if (ply:Alive() && ply:GetActiveWeapon().IsBuuBase) then
             local vmpos, vmang = ply:GetActiveWeapon():ManipulateViewModel(Vector(origin.x, origin.y, origin.z), Angle(angles.p,angles.y,angles.r))
@@ -2136,6 +2136,10 @@ if (CLIENT) then
             
             -- Ironsight FOV
             if !ply:GetActiveWeapon().Sniper then
+                if (myfov == nil) then
+                    myfov = LocalPlayer():GetInfoNum("fov_desired", 90)
+                    myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
+                end
                 local m_PlayerCam = GAMEMODE:CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
                 m_PlayerCam.origin = origin
                 m_PlayerCam.angles = angles
