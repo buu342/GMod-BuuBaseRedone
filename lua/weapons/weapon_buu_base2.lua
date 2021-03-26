@@ -1780,7 +1780,7 @@ if (SERVER) then
         
         -- Confirm if we're sliding
         if !ply:GetNWBool("Buu_Sliding") && ply:KeyDown(IN_SPEED) && ply:KeyDown(IN_DUCK) && ply:IsOnGround() && ply:GetVelocity():Length() >= ply:GetRunSpeed() then
-            ply:SetNWFloat("Buu_SlideVel", vel:Length())
+            ply:SetNWFloat("Buu_SlideVel", vel)
             ply:SetNWVector("Buu_SlideDir", dir)
             ply:SetNWBool("Buu_Sliding", true)
             ply:SetNWFloat("Buu_SlideCooldown", CurTime()+1)
