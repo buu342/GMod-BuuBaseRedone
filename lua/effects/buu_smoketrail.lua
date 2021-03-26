@@ -52,21 +52,23 @@ function EFFECT:Think()
         return 
     end
     
-    -- Go through the variable table
-	for k, p in pairs(self.Particles) do
-		if (p.Pos != nil) then
-        
-            -- Update each strand
-			p.Pos = p.Pos + p.Vel
-			p.Size = p.Size + p.SizeInc
-			p.Alpha = p.Alpha - FrameTime()*10
+    -- Go through the variable table (If the game isn't paused)
+    if (!game.SinglePlayer() || !gui.IsGameUIVisible()) then
+        for k, p in pairs(self.Particles) do
+            if (p.Pos != nil) then
             
-            -- If the strand is invisible, remove it from the table
-			if (p.Alpha < 0) then
-				table.remove(self.Particles, 1)
-			end
-		end
-	end
+                -- Update each strand
+                p.Pos = p.Pos + p.Vel
+                p.Size = p.Size + p.SizeInc
+                p.Alpha = p.Alpha - FrameTime()*10
+                
+                -- If the strand is invisible, remove it from the table
+                if (p.Alpha < 0) then
+                    table.remove(self.Particles, 1)
+                end
+            end
+        end
+    end
 	
     -- Ensure the weapon we're attached to exists
 	if (!IsValid(self.WeaponEnt) || !IsValid(self.WeaponEnt:GetOwner()) || !IsValid(self.WeaponEnt:GetOwner():GetActiveWeapon())) then return end
