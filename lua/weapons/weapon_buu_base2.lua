@@ -1369,6 +1369,7 @@ function SWEP:StartShotgunReload()
     self:SetBuu_Reloading(true)
     self:SetBuu_SpecialState(1)
     self:SetBuu_StateTimer(CurTime()+self.Owner:GetViewModel():SequenceDuration())
+    self:SetBuu_GotoIdle(0)
 end
 
 
