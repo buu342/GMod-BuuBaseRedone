@@ -2101,8 +2101,8 @@ if (CLIENT) then
     -----------------------------*/
     
     -- Initialize constants
-    local myfov = 75
-    local myfov_t = 90
+    local myfov = LocalPlayer():GetInfoNum("fov_desired", 90)
+    local myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
     local function BuuBase_CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
         if (ply:Alive() && ply:GetActiveWeapon().IsBuuBase) then
             local vmpos, vmang = ply:GetActiveWeapon():ManipulateViewModel(Vector(origin.x, origin.y, origin.z), Angle(angles.p,angles.y,angles.r))
