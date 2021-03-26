@@ -2188,7 +2188,6 @@ if (CLIENT) then
             vm:SetRenderMode(RENDERMODE_NORMAL)
             vm:SetColor(Color(255, 255, 255, 255))
             ply.FixViewmodelColor = false
-            return false
         end
     end
     hook.Add("PreDrawViewModel", "BuuBase_HideViewModelScope", BuuBase_HideViewModelScope)
