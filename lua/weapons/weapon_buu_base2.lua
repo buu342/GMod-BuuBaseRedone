@@ -953,7 +953,6 @@ local ironsounds = {
 }
 SWEP.PlayedScopeSound = false
 function SWEP:HandleIronsights()
-    
     -- Check if the player is ironsighting
     if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
         if (!self:GetBuu_Ironsights()) then
@@ -995,7 +994,7 @@ function SWEP:HandleIronsights()
         end
         
         -- Set the FOV if the scoping animation is finished
-        if (self.Sniper && self.TimeToScope < UnPredictedCurTime()) then
+        if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self.TimeToScope != 0) then
             self.Owner:SetFOV(self.SniperZoom, 0)
             if (IsValidVariable(self.ScopeEnterSound) && !self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
                 self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2+2) 
@@ -1005,7 +1004,7 @@ function SWEP:HandleIronsights()
     else
 
         -- Stop ironsighting if it's on
-        if (self:GetBuu_Ironsights() && (!self.PlayFullIronAnim || (self:GetBuu_TimeToScope() < CurTime() && self:GetNextPrimaryFire() < CurTime()))) then
+        if (self:GetBuu_Ironsights() && (!self.PlayFullIronAnim || (self.TimeToScope < CurTime() && self:GetBuu_TimeToScope() < CurTime() && self:GetNextPrimaryFire() < CurTime()))) then
             self:SetBuu_Ironsights(false)
             
             -- Play the ironsight sound
@@ -1044,6 +1043,17 @@ function SWEP:HandleIronsights()
             end
         end
     end
+end
+
+
+/*-----------------------------
+    IsScoped
+    Returns whether or not the weapon is scoped
+    @Return whether or not the weapon is scoped
+-----------------------------*/
+
+function SWEP:IsScoped()
+    return (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self.TimeToScope != 0 && self:GetBuu_Ironsights())
 end
 
 
@@ -2155,23 +2165,21 @@ if (CLIENT) then
     local function BuuBase_HideViewModelScope(vm, ply, wep)
     
         -- If we're holding a buu weapon
-        if (wep.IsBuuBase) then      
-            if (wep.Sniper) then
-                if (wep.TimeToScope < UnPredictedCurTime() && wep:GetBuu_Ironsights()) then
-                    vm:SetRenderMode(RENDERMODE_TRANSCOLOR)
-                    vm:SetColor(Color(255, 255, 255, 1))
-                
-                    -- Remove the flashlight if it exists
-                    if (vm.FlashLight != nil) then
-                        vm.FlashLight:Remove()
-                        vm.FlashLight = nil
-                    end
-                    
-                    -- Prevent drawing the VM normally
-                    return true
-                else
-                    ply.FixViewmodelColor = true
+        if (wep.IsBuuBase) then 
+            if (wep:IsScoped()) then
+                vm:SetRenderMode(RENDERMODE_TRANSCOLOR)
+                vm:SetColor(Color(255, 255, 255, 1))
+            
+                -- Remove the flashlight if it exists
+                if (vm.FlashLight != nil) then
+                    vm.FlashLight:Remove()
+                    vm.FlashLight = nil
                 end
+                
+                -- Prevent drawing the VM normally
+                return true
+            else
+                ply.FixViewmodelColor = true
             end
         end
         
@@ -2196,7 +2204,7 @@ if (CLIENT) then
     function SWEP:AdjustMouseSensitivity()
     
         -- Change the sensitivity if using a sniper scope or ironsight, otherwise set it back to normal
-        if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self:GetBuu_Ironsights()) then
+        if (self:IsScoped()) then
             return GetConVar("cl_buu_scopesensitivity"):GetFloat()
         elseif (self:GetBuu_Ironsights()) then
             return GetConVar("cl_buu_ironsensitivity"):GetFloat()
@@ -2286,7 +2294,7 @@ if (CLIENT) then
     function SWEP:ViewModelDrawn(vm)
     
         -- Don't draw the laser/flashlight if the sniper scope is on
-        if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self:GetBuu_Ironsights()) then
+        if (self:IsScoped()) then
             return 
         end
 
@@ -2512,7 +2520,7 @@ if (CLIENT) then
     function SWEP:DrawHUD()
     
         -- Draw the sniper scope in using it, or the crosshair if not
-        if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self:GetBuu_Ironsights()) then
+        if (self:IsScoped()) then
         
             -- Draw extra stuff first
             self:PreDrawScope()
