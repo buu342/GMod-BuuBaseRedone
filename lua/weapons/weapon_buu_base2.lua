@@ -977,7 +977,9 @@ function SWEP:HandleIronsights()
                     self:SendWeaponAnim(self.IronsightInAnim)
                     if (self.PlayFullIronAnim) then
                         local time = self.Owner:GetViewModel():SequenceDuration()
-                        self.TimeToScope = UnPredictedCurTime()+time
+                        if (SERVER || IsFirstTimePredicted()) then
+                            self.TimeToScope = UnPredictedCurTime()+time
+                        end
                         self:SetBuu_TimeToScope(CurTime()+time)
                         self:SetNextPrimaryFire(CurTime()+time)
                         self:SetBuu_GotoIdle(0)
