@@ -718,7 +718,6 @@ end
 function SWEP:Reload()
     if (self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) <= 0) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
-    if (!self:ConfirmReload()) then return end
     
     -- If we are missing bullets, and we aren't reloading already
     if (self:Clip1() < self:GetMaxClip1() && !self:GetBuu_Reloading()) then 
@@ -929,18 +928,6 @@ end
 
 
 /*-----------------------------
-    ConfirmReload
-    Extra checks to do before allowing a reload
-    For developers
-    @Returns Whether to allow reloading or not
------------------------------*/
-
-function SWEP:ConfirmReload()
-    return true
-end
-
-
-/*-----------------------------
     HandleIronsights
     Handles ironsight logic
 -----------------------------*/
@@ -998,8 +985,10 @@ function SWEP:HandleIronsights()
         -- Set the FOV if the scoping animation is finished
         if (self.Sniper && self.TimeToScope < UnPredictedCurTime() && self.TimeToScope != 0) then
             self.Owner:SetFOV(self.SniperZoom, 0)
-            if (IsValidVariable(self.ScopeEnterSound) && !self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
-                self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2+2) 
+            if (!self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
+                if (IsValidVariable(self.ScopeEnterSound)) then
+                    self:EmitSound(self.ScopeEnterSound, 40, 100, 1, CHAN_VOICE2+2) 
+                end
                 self.PlayedScopeSound = true
             end
         end
@@ -1022,8 +1011,10 @@ function SWEP:HandleIronsights()
             end
             self:SetBuu_TimeToScope(0)
             if (self.Sniper) then
-                if (IsValidVariable(self.ScopeExitSound) && self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
-                    self:EmitSound(self.ScopeExitSound, 40, 100, 1, CHAN_VOICE2+2) 
+                if (self.PlayedScopeSound && (SERVER || IsFirstTimePredicted())) then
+                    if (IsValidVariable(self.ScopeExitSound)) then
+                        self:EmitSound(self.ScopeExitSound, 40, 100, 1, CHAN_VOICE2+2) 
+                    end
                     self.PlayedScopeSound = false
                 end
                 self.Owner:SetFOV(0, 0)
@@ -1038,9 +1029,11 @@ function SWEP:HandleIronsights()
             
             -- If we have an ironsight animation, play it
             if (IsValidVariable(self.IronsightOutAnim) && !self:GetBuu_Reloading()) then
+                local time = CurTime()+self.Owner:GetViewModel():SequenceDuration()
                 self:SendWeaponAnim(self.IronsightOutAnim)
+                self:SetBuu_GotoIdle(time)
                 if (self.PlayFullIronAnim) then
-                    self:SetNextPrimaryFire(CurTime()+self.Owner:GetViewModel():SequenceDuration())
+                    self:SetNextPrimaryFire(time)
                 end
             end
         end
@@ -1836,6 +1829,7 @@ if (CLIENT) then
     local ironsighttime = 0
     local lastfire = 0
     local ironfiretime = 0
+    local maxroll = 30 -- How much to roll the gun when going into ironsights
     function SWEP:ManipulateViewModel(pos, ang)
         if !IsValid(self.Owner) then return end
         
@@ -1889,14 +1883,13 @@ if (CLIENT) then
                     Sliding, and Sprinting
         --------------------------------------------*/
         
-        local maxroll = 30 -- How much to roll the gun when going into ironsights
         if (self:GetBuu_Ironsights() && !self:GetBuu_Reloading() && IsValidVariable(self.IronSightsPos)) then
             local targettime = 0
             
             -- If just fired, reset the shooting animation timer
             if (self:GetBuu_FireTime() != lastfire) then
                 lastfire = self:GetBuu_FireTime()
-                ironfiretime = CurTime()+0.04
+                ironfiretime = self:GetBuu_FireTime()+0.04
             end
         
             -- If we just fired, handle ironsight shooting animations
