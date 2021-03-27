@@ -718,6 +718,7 @@ end
 function SWEP:Reload()
     if (self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) <= 0) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
+    if (IsValidVariable(self.IronsightOutAnim) && self:GetBuu_Ironsights()) then return end
     
     -- If we are missing bullets, and we aren't reloading already
     if (self:Clip1() < self:GetMaxClip1() && !self:GetBuu_Reloading()) then 
@@ -941,7 +942,7 @@ local ironsounds = {
 SWEP.PlayedScopeSound = false
 function SWEP:HandleIronsights()
     -- Check if the player is ironsighting
-    if (self.Owner:KeyDown(IN_ATTACK2) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
+    if (self.Owner:KeyDown(IN_ATTACK2) && (!self.Owner:KeyPressed(IN_RELOAD) || !IsValidVariable(self.IronsightOutAnim)) && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_NearWall() && !self:GetBuu_Reloading() && (!self.PlayFullIronAnim || self:GetNextPrimaryFire() < CurTime())) then
         if (!self:GetBuu_Ironsights()) then
         
             -- Start the Lua scope animation
