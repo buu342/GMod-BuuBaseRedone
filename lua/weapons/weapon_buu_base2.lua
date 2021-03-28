@@ -2764,7 +2764,7 @@ if (CLIENT) then
     -----------------------------*/ 
 
     local function Buu_OverrideSecondaryAmmo(name)
-        if (IsValid(LocalPlayer():GetActiveWeapon()) && LocalPlayer():GetActiveWeapon().IsBuuBase) then
+        if (IsValid(LocalPlayer()) && IsValid(LocalPlayer():GetActiveWeapon()) && LocalPlayer():GetActiveWeapon().IsBuuBase) then
             if (name == "CHudSecondaryAmmo") then return false end
         end
     end
