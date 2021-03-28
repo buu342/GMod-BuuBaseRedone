@@ -93,6 +93,8 @@ SWEP.Primary.BurstCount       = 3     -- Number of burst shots
 SWEP.Primary.BurstTime        = 0.075 -- Time between burst shots
 SWEP.Primary.CancelBurst      = true  -- Allow canceling burstfire early
 SWEP.Primary.DelayLastShot    = -1    -- Delay value to use when firing the last shot. -1 to not use
+SWEP.Primary.Projectile       = -1    -- Projectile entity to shoot. -1 to not use
+SWEP.Primary.ProjectileForce  = 10000 -- Projectile force
 
 SWEP.Secondary.Silenced         = false
 SWEP.Secondary.SoundChannelSwap = false 
@@ -101,6 +103,8 @@ SWEP.Secondary.BurstCount       = 3
 SWEP.Secondary.BurstTime        = 0.075 
 SWEP.Secondary.CancelBurst      = true  
 SWEP.Secondary.DelayLastShot    = -1   
+SWEP.Secondary.Projectile       = -1
+SWEP.Secondary.ProjectileForce  = 10000
 
 
 /*==================== Ironsight Settings ===================*/
@@ -579,8 +583,12 @@ function SWEP:PrimaryAttack()
         self.Owner:LagCompensation(true)
     end
     
-    -- Shoot the bullet
-    self:ShootCode(mode)
+    -- Shoot the bullet or projectile
+    if (IsValidVariable(mode.Projectile)) then
+        self:ShootCode(mode)
+    else
+        self:ShootProjectile(mode)
+    end
     
     -- Do animations
     -- TODO: Fix the logic here
@@ -923,6 +931,41 @@ function SWEP:ShootCode(mode)
         
         -- Reset the door after some time
         timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
+    end
+end
+
+
+/*-----------------------------
+    ShootProjectile
+    Handles projectile shooting logic
+    @Param The firemode to use
+-----------------------------*/
+
+function SWEP:ShootProjectile(mode)
+    if SERVER then
+        local ent = ents.Create(mode.Projectile) 
+        
+        -- Ensure the projectile was created
+        if (!IsValid(ent)) then return end
+        
+        -- Spawnt the projectile
+        ent.Force = mode.ProjectileForce
+        ent.Owner = self.Owner
+        ent.Inflictor = self
+        ent:SetPos(self.Owner:GetShootPos() + self.Owner:GetAimVector()*16)
+        ent:SetAngles(self.Owner:EyeAngles())
+        ent:SetOwner(self.Owner)
+        ent.Owner = self.Owner
+        ent.Inflictor = self
+        ent:Spawn()
+        
+        -- Enable physics and give it some force
+        local phys = ent:GetPhysicsObject()
+        if IsValid(phys)then 
+            local velocity = self.Owner:GetAimVector()
+            velocity = velocity*ent.Force
+            phys:ApplyForceCenter(velocity)
+        end
     end
 end
 
