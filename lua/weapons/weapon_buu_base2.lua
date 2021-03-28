@@ -532,19 +532,8 @@ end
 -----------------------------*/
 
 function SWEP:PrimaryAttack() 
-
-    -- Initialize the firemodes table
-    -- Dynamic array due to Lua auto refresh
-    local firemodes = { 
-        self.Primary,
-        self.Secondary,
-        self.Tertiary,
-        self.Quaternary,
-        self.Quinary,
-    }
-
     -- Get the currently active weapon mode
-    local mode = firemodes[self:GetBuu_FireMode()+1]
+    local mode = self:GetFireModeTable()
 
     -- Allow changing weapon mode
     if (self.ChangeFireModes && self.Owner:KeyDown(IN_USE)) then
@@ -640,7 +629,7 @@ function SWEP:PrimaryAttack()
     end
     
     -- Clicking sound on low ammo
-    if (self:Clip1() <= math.ceil(self.Primary.ClipSize/4) && GetConVar("cl_buu_lowammowarn"):GetBool()) then
+    if (self:Clip1() <= math.ceil(self:GetMaxClip1()/4) && GetConVar("cl_buu_lowammowarn"):GetBool()) then
         self:EmitSound("weapons/shotgun/shotgun_empty.wav", 50, 100, 1, CHAN_ITEM)
     end
     
@@ -664,8 +653,8 @@ function SWEP:PrimaryAttack()
     -- Change the owner's view angles permanantly
     if ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted())) then
         local eyeang = self.Owner:EyeAngles()
-        eyeang.pitch = eyeang.pitch - (self.Primary.Delay*0.5)
-        eyeang.yaw = eyeang.yaw - (self.Primary.Delay*math.random(-1, 1)*0.25)
+        eyeang.pitch = eyeang.pitch - (mode.Delay*0.5)
+        eyeang.yaw = eyeang.yaw - (mode.Delay*math.random(-1, 1)*0.25)
         self.Owner:SetEyeAngles(eyeang)
     end
     
@@ -972,6 +961,25 @@ end
 
 
 /*-----------------------------
+    GetFireModeTable
+    Returns the fire mode table
+    @Return the fire mode table
+-----------------------------*/
+
+function SWEP:GetFireModeTable()
+    -- Dynamic array due to Lua auto refresh
+    local firemodes = { 
+        self.Primary,
+        self.Secondary,
+        self.Tertiary,
+        self.Quaternary,
+        self.Quinary,
+    }
+    return firemodes[self:GetBuu_FireMode()+1]
+end
+
+
+/*-----------------------------
     HandleFireModeChange
     Code that runs when the fire mode is changed
 -----------------------------*/
@@ -1214,14 +1222,9 @@ end
 function SWEP:HandleBurstFire()
 
     -- If we're using a weapon with burstfire
-    if ((self:GetBuu_FireMode() == 0 && self.Primary.BurstFire) || (self:GetBuu_FireMode() == 1 && self.Secondary.BurstFire)) then
-    
-        -- Get the fire mode
-        local mode = self.Primary
-        if (self:GetBuu_FireMode() == 1) then
-            mode = self.Secondary
-        end
-        
+    local mode = self:GetFireModeTable()
+    if (self:GetBuu_FireMode() == 0 && mode.BurstFire) then
+
         -- If we still have bullets to shoot, shoot 'em, otherwise reset the burst fire state
         if (self:Clip1() != 0 && self:GetBuu_BurstCount() != 0 && self:GetBuu_BurstCount() < mode.BurstCount && self:GetBuu_NextBurst() < CurTime()) then
             self:PrimaryAttack()
@@ -1312,8 +1315,8 @@ function SWEP:HandleReloadAmmo()
             setammo = self:Clip1()+shellstofill
         else
             -- Normal reload
-            takeammo = self.Primary.ClipSize - self:Clip1()
-            setammo = math.min(self.Primary.ClipSize, self:Clip1() + ammo)
+            takeammo = self:GetMaxClip1() - self:Clip1()
+            setammo = math.min(self:GetMaxClip1(), self:Clip1() + ammo)
         end
         
         -- Put ammo in the clip
@@ -1401,13 +1404,14 @@ function SWEP:HandleBarrelSmoke()
         end
         
         -- Calculate the smoke value based on the firing delay
+        local mode = self:GetFireModeTable()
         if (self:GetBuu_FireTime()+0.2 > CurTime()) then
-            self.Smoke = self.Smoke + self.Primary.Delay*2
+            self.Smoke = self.Smoke + mode.Delay*2
         end
-        self.Smoke = math.max(self.Smoke-self.Primary.Delay/10, 0)
+        self.Smoke = math.max(self.Smoke-mode.Delay/10, 0)
         
         -- If we hit a arbitrary firing amount, and the player stopped firing, emit the smoke effect
-        if (self.Smoke >= self.Primary.Delay*100 && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
+        if (self.Smoke >= mode.Delay*100 && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
             self.Smoke = 0
             self.NextSmoke = CurTime()+3
             
@@ -1645,7 +1649,7 @@ function SWEP:FireAnimationEvent(pos, ang, event)
         
         -- Select which effect to use
         local effect = self.MuzzleEffect
-        if ((self:GetBuu_FireMode() == 0 && self.Primary.Silenced) || (self:GetBuu_FireMode() == 1 && self.Secondary.Silenced)) then
+        if (self:GetFireModeTable().Silenced) then
             effect = self.MuzzleEffectS
         end
         
@@ -1977,7 +1981,7 @@ if (CLIENT) then
             -- If just fired, reset the shooting animation timer
             if (self:GetBuu_FireTime() != lastfire) then
                 lastfire = self:GetBuu_FireTime()
-                ironfiretime = self:GetBuu_FireTime()+0.04
+                ironfiretime = self:GetBuu_FireTime()
             end
         
             -- If we just fired, handle ironsight shooting animations
@@ -2010,7 +2014,7 @@ if (CLIENT) then
             -- Tilt the viewmodel if we're sliding
             TargetVector = Vector(0, 0, 0)
             TargetVectorAngle = Vector(0, 0, 20)   
-        elseif (self:GetBuu_NearWall() && IsValidVariable(self.RunArmPos) && (self:Clip1() == self.Primary.ClipSize || !self:GetBuu_Reloading())) then 
+        elseif (self:GetBuu_NearWall() && IsValidVariable(self.RunArmPos) && (self:Clip1() == self:GetMaxClip1() || !self:GetBuu_Reloading())) then 
         
             -- Do "Near Wall" animation
             TargetVector = self.RunArmPos
@@ -2631,6 +2635,7 @@ if (CLIENT) then
             if (self.CrosshairType == 0) then return end
             
             -- Pick the Crosshair
+            local mode = self:GetFireModeTable()
             if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 1) then
             
                 -- Enable HL2 Croshair
@@ -2646,7 +2651,7 @@ if (CLIENT) then
                     scale = 16
                 else
                     if (lastfirehud != self:GetBuu_FireTime()) then
-                        togap = togap + 10+self.Primary.Recoil*5
+                        togap = togap + 10+mode.Recoil*5
                         lastfirehud = self:GetBuu_FireTime()
                     end
                     togap = Lerp(0.04, togap, 0)
@@ -2654,7 +2659,7 @@ if (CLIENT) then
                 if (self.Sniper) then
                     scale = scale/2
                 end
-                finalgap = Lerp(1, finalgap, movementgap*50+scale*40+togap+self.Primary.Recoil*15)
+                finalgap = Lerp(1, finalgap, movementgap*50+scale*40+togap+mode.Recoil*15)
                 
                 -- Set the crosshair X+Y where the player is looking in thirdperson, or the center of the screen in first person
                 if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
@@ -2712,9 +2717,9 @@ if (CLIENT) then
                     else
                         
                         -- Circular crosshair
-                        surface.DrawCircle(x, y, self.Primary.Cone*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, self.Primary.Cone*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, self.Primary.Cone*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        surface.DrawCircle(x, y, mode.Cone*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        surface.DrawCircle(x, y, mode.Cone*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        surface.DrawCircle(x, y, mode.Cone*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
                     end
                 end
             end
@@ -2747,7 +2752,7 @@ if (CLIENT) then
         surface.DrawTexturedRect(x, y, w, h)
 
         -- Draw the ammo
-        draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self.Primary.Ammo), "HudSelectionText", x+w, y+h-48, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0, 0, 0, 255))
+        draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()), "HudSelectionText", x+w, y+h-48, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0, 0, 0, 255))
         
         -- Draw the rest of the weapon info
         self:PrintWeaponInfo(x+w+20, y+h*0.95, alpha)
