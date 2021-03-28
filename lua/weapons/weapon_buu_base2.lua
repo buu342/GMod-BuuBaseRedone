@@ -52,11 +52,31 @@ SWEP.Primary.Automatic   = true
 SWEP.Primary.Ammo        = "smg1"
 
 -- Secondary Fire Mode
-SWEP.Secondary.Sound       = -1
 SWEP.Secondary.ClipSize    = -1
 SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic   = false 
 SWEP.Secondary.Ammo        = "none"
+
+-- Tertiary Fire Mode
+SWEP.Tertiary = {}
+SWEP.Tertiary.ClipSize    = -1
+SWEP.Tertiary.DefaultClip = -1
+SWEP.Tertiary.Automatic   = false 
+SWEP.Tertiary.Ammo        = "none"
+
+-- Quaternary Fire Mode
+SWEP.Quaternary = {}
+SWEP.Quaternary.ClipSize    = -1
+SWEP.Quaternary.DefaultClip = -1
+SWEP.Quaternary.Automatic   = false 
+SWEP.Quaternary.Ammo        = "none"
+
+-- Secondary Fire Mode
+SWEP.Quinary = {}
+SWEP.Quinary.ClipSize    = -1
+SWEP.Quinary.DefaultClip = -1
+SWEP.Quinary.Automatic   = false 
+SWEP.Quinary.Ammo        = "none"
 
 
 /*=============================================================
@@ -103,16 +123,6 @@ SWEP.Primary.CancelBurst      = true  -- Allow canceling burstfire early
 SWEP.Primary.DelayLastShot    = -1    -- Delay value to use when firing the last shot. -1 to not use
 SWEP.Primary.Projectile       = -1    -- Projectile entity to shoot. -1 to not use
 SWEP.Primary.ProjectileForce  = 10000 -- Projectile force
-
-SWEP.Secondary.Silenced         = false
-SWEP.Secondary.SoundChannelSwap = false 
-SWEP.Secondary.BurstFire        = false  
-SWEP.Secondary.BurstCount       = 3     
-SWEP.Secondary.BurstTime        = 0.075 
-SWEP.Secondary.CancelBurst      = true  
-SWEP.Secondary.DelayLastShot    = -1   
-SWEP.Secondary.Projectile       = -1
-SWEP.Secondary.ProjectileForce  = 10000
 
 
 /*==================== Ironsight Settings ===================*/
@@ -973,7 +983,8 @@ function SWEP:HandleFireModeChange()
 
     -- Change the firemode
     self:SetBuu_FireMode(newmode%(#self.FireModeNames))
-    self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..self.FireModeNames[newmode])
+    PrintTable(self.FireModeNames)
+    self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..self.FireModeNames[self:GetBuu_FireMode()+1])
 
     -- Play an animation if we have one
     if (IsValidVariable(self.ModeAnim)) then
