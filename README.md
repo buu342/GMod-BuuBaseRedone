@@ -1,6 +1,6 @@
 # Buu342's Weapon Base 2
 
-<img src="https://i.imgur.com/dQ0R4o5.gif" />
+<img src=".github/action.gif" />
 
 This is a complete remake of my original weapon base.</br></br>
 The original was buggy, contained code from a myriad of sources, and in general was a mess to maintain. I've been trying to refurbish it for quite some time, with this version being the final one that I'm happy to release to the wild.</br></br>
