@@ -2753,6 +2753,19 @@ if (CLIENT) then
         self:PrintWeaponInfo(x+w+20, y+h*0.95, alpha)
     end
     
+    
+    /*-----------------------------
+        Buu_OverrideSecondaryAmmo
+        Prevents drawing secondary ammo type
+    -----------------------------*/ 
+
+    local function Buu_OverrideSecondaryAmmo(name)
+        if (IsValid(LocalPlayer():GetActiveWeapon()) && LocalPlayer():GetActiveWeapon().IsBuuBase) then
+            if (name == "CHudSecondaryAmmo") then return false end
+        end
+    end
+    hook.Add("HUDShouldDraw", "Buu_OverrideSecondaryAmmo", Buu_OverrideSecondaryAmmo)
+    
  
     /*-----------------------------
         Buu_StopThirdpersonSounds
