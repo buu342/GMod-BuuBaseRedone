@@ -544,7 +544,7 @@ function SWEP:PrimaryAttack()
     end
 
     -- Make sure we can shoot
-    if (self:GetBuu_FireMode() == 0 && !mode.BurstFire && self:GetBuu_BurstCount() >= mode.BurstCount) then return end
+    if (!mode.BurstFire && self:GetBuu_BurstCount() >= mode.BurstCount) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
     
     -- Allow for canceling shotgun reload
@@ -991,8 +991,7 @@ function SWEP:HandleFireModeChange()
 
     -- Change the firemode
     self:SetBuu_FireMode(newmode%(#self.FireModeNames))
-    PrintTable(self.FireModeNames)
-    self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..self.FireModeNames[self:GetBuu_FireMode()+1])
+    self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..self.FireModeNames[newmode])
 
     -- Play an animation if we have one
     if (IsValidVariable(self.ModeAnim)) then
@@ -1003,7 +1002,7 @@ function SWEP:HandleFireModeChange()
         time = self.Owner:GetViewModel():SequenceDuration()
     else
         -- Play a sound effect
-        if (self:GetBuu_FireMode() == 0) then
+        if (newmode == 0) then
             self:EmitSound("weapons/smg1/switch_burst.wav", 40, 100, 1, CHAN_ITEM)
         else
             self:EmitSound("weapons/smg1/switch_single.wav", 40, 100, 1, CHAN_ITEM)
@@ -1223,7 +1222,7 @@ function SWEP:HandleBurstFire()
 
     -- If we're using a weapon with burstfire
     local mode = self:GetFireModeTable()
-    if (self:GetBuu_FireMode() == 0 && mode.BurstFire) then
+    if (mode.BurstFire) then
 
         -- If we still have bullets to shoot, shoot 'em, otherwise reset the burst fire state
         if (self:Clip1() != 0 && self:GetBuu_BurstCount() != 0 && self:GetBuu_BurstCount() < mode.BurstCount && self:GetBuu_NextBurst() < CurTime()) then
