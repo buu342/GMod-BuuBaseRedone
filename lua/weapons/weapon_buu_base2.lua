@@ -85,7 +85,7 @@ SWEP.CustomFlashlight = true -- Use custom flashlight
 
 SWEP.ChangeFireModes = false -- Allow switching between fire modes with E+Mouse1?
                              -- If fire mode is enabled, the values of SWEP.Secondary will be used instead
-                            
+
 SWEP.Primary.Silenced         = false -- Use a silenced muzzleflash?
 SWEP.Primary.SoundChannelSwap = false -- Swap between CHAN_WEAPON and another channel during shooting (Helps some weapons sound better)
 SWEP.Primary.BurstFire        = false -- Burst fire (Requires Automatic = false)
@@ -585,9 +585,9 @@ function SWEP:PrimaryAttack()
     
     -- Shoot the bullet or projectile
     if (IsValidVariable(mode.Projectile)) then
-        self:ShootCode(mode)
-    else
         self:ShootProjectile(mode)
+    else
+        self:ShootCode(mode)
     end
     
     -- Do animations
@@ -1834,10 +1834,16 @@ if (SERVER) then
     -----------------------------*/
     
     function BuuBase_HandleFlashlight(ply, tostate)
-    
+
         -- If we're holding a buu weapon
         if (ply:GetActiveWeapon() != nil && ply:GetActiveWeapon().IsBuuBase) then
         
+            -- Disable flashlight on death
+            if (!ply:Alive()) then 
+                ply:SetNWBool("Buu_UsingFlashlight", false) 
+                return 
+            end
+            
             -- Check if we can use the custom flashlight
             if (!GetConVar("sv_buu_customflashlight"):GetBool() || !ply:GetActiveWeapon().CustomFlashlight) then
                 return true
