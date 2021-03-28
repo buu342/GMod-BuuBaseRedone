@@ -85,6 +85,14 @@ SWEP.CustomFlashlight = true -- Use custom flashlight
 
 SWEP.ChangeFireModes = false -- Allow switching between fire modes with E+Mouse1?
                              -- If fire mode is enabled, the values of SWEP.Secondary will be used instead
+                             -- Then it's SWEP.Tertiary, SWEP.Quaternary, and SWEP.Quinary
+
+-- The firemode names to use if above is true
+-- The firemode needs a name or it won't change to it!
+SWEP.FireModeNames = { 
+    "Primary",
+    "Secondary",
+}
 
 SWEP.Primary.Silenced         = false -- Use a silenced muzzleflash?
 SWEP.Primary.SoundChannelSwap = false -- Swap between CHAN_WEAPON and another channel during shooting (Helps some weapons sound better)
@@ -515,40 +523,23 @@ end
 
 function SWEP:PrimaryAttack() 
 
-    -- Get the weapon mode
-    local mode = self.Primary
-    if (self:GetBuu_FireMode() == 1) then
-        mode = self.Secondary
-    end
+    -- Initialize the firemodes table
+    -- Dynamic array due to Lua auto refresh
+    local firemodes = { 
+        self.Primary,
+        self.Secondary,
+        self.Tertiary,
+        self.Quaternary,
+        self.Quinary,
+    }
+
+    -- Get the currently active weapon mode
+    local mode = firemodes[self:GetBuu_FireMode()+1]
 
     -- Allow changing weapon mode
     if (self.ChangeFireModes && self.Owner:KeyDown(IN_USE)) then
         if (self:GetNextPrimaryFire() < CurTime() && !self:GetBuu_Reloading() && self.Owner:KeyPressed(IN_ATTACK)) then
-            local time = 0.5
-            local anim = self.ModeAnim
-
-            -- Change the firemode and notify the player
-            self:SetBuu_FireMode((self:GetBuu_FireMode()+1)%2)
-            self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..(self:GetBuu_FireMode()+1))
-            
-            -- Play an animation if we have one
-            if (IsValidVariable(self.ModeAnim)) then
-                if (IsValidVariable(self.ModeAnimEmpty)) then
-                    anim = self.ModeAnimEmpty
-                end
-                self:SendWeaponAnim(anim)
-                time = self.Owner:GetViewModel():SequenceDuration()
-            else
-                -- Play a sound effect
-                if (self:GetBuu_FireMode() == 0) then
-                    self:EmitSound("weapons/smg1/switch_burst.wav", 40, 100, 1, CHAN_ITEM)
-                else
-                    self:EmitSound("weapons/smg1/switch_single.wav", 40, 100, 1, CHAN_ITEM)
-                end
-            end
-            
-            -- Delay the next action for some time
-            self:SetNextPrimaryFire(CurTime() + time)
+            self:HandleFireModeChange()
         end
         return
     end
@@ -967,6 +958,41 @@ function SWEP:ShootProjectile(mode)
             phys:ApplyForceCenter(velocity)
         end
     end
+end
+
+
+/*-----------------------------
+    HandleFireModeChange
+    Code that runs when the fire mode is changed
+-----------------------------*/
+
+function SWEP:HandleFireModeChange()
+    local time = 0.5
+    local anim = self.ModeAnim
+    local newmode = self:GetBuu_FireMode()+1
+
+    -- Change the firemode
+    self:SetBuu_FireMode(newmode%(#self.FireModeNames))
+    self.Owner:PrintMessage(HUD_PRINTCENTER, "Fire Mode Set To "..self.FireModeNames[newmode])
+
+    -- Play an animation if we have one
+    if (IsValidVariable(self.ModeAnim)) then
+        if (IsValidVariable(self.ModeAnimEmpty)) then
+            anim = self.ModeAnimEmpty
+        end
+        self:SendWeaponAnim(anim)
+        time = self.Owner:GetViewModel():SequenceDuration()
+    else
+        -- Play a sound effect
+        if (self:GetBuu_FireMode() == 0) then
+            self:EmitSound("weapons/smg1/switch_burst.wav", 40, 100, 1, CHAN_ITEM)
+        else
+            self:EmitSound("weapons/smg1/switch_single.wav", 40, 100, 1, CHAN_ITEM)
+        end
+    end
+    
+    -- Delay the next action for some time
+    self:SetNextPrimaryFire(CurTime() + time)
 end
 
 
