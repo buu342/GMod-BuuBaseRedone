@@ -544,7 +544,7 @@ function SWEP:PrimaryAttack()
     end
 
     -- Make sure we can shoot
-    if (!mode.BurstFire && self:GetBuu_BurstCount() >= mode.BurstCount) then return end
+    if (IsValidVariable(mode.BurstFire) && !mode.BurstFire && self:GetBuu_BurstCount() >= mode.BurstCount) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
     
     -- Allow for canceling shotgun reload
