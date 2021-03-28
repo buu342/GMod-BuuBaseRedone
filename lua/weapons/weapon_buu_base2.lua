@@ -254,7 +254,6 @@ function SWEP:SetupDataTables()
     self:NetworkVar("Bool",  12, "Buu_Sprinting")       -- Are we sprinting?
     self:NetworkVar("Bool",  13, "Buu_NearWall")        -- Are we near a wall?
     self:NetworkVar("Bool",  14, "Buu_OnLadder")        -- Are we on a ladder?
-    self:NetworkVar("Bool",  15, "Buu_UsingFlashlight") -- Are we using a flashlight?
 end
 
 
@@ -422,7 +421,7 @@ function SWEP:Deploy()
     -- Create the flashlight if needed
     if (SERVER && GetConVar("sv_buu_customflashlight"):GetBool() && self.Owner:FlashlightIsOn() && self.Owner:GetActiveWeapon().CustomFlashlight) then
         self.Owner:Flashlight(false)
-        self.Owner:GetActiveWeapon():SetBuu_UsingFlashlight(true)
+        self.Owner:SetNWBool("Buu_UsingFlashlight", true)
     end
     
     -- Reset some variables
@@ -1532,7 +1531,7 @@ function SWEP:Cleanup(holsterto)
     end
 
     -- If the player is using the flashlight
-    if (self:GetBuu_UsingFlashlight()) then
+    if (self.Owner:GetNWBool("Buu_UsingFlashlight")) then
     
         -- Remove the flashlight from the viewmodel
         if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel().FlashLight != nil) then
@@ -1802,9 +1801,11 @@ if (SERVER) then
             end
             
             -- Toggle the custom flashlight
-            ply:GetActiveWeapon():SetBuu_UsingFlashlight(!ply:GetActiveWeapon():GetBuu_UsingFlashlight())
+            ply:SetNWBool("Buu_UsingFlashlight", !ply:GetNWBool("Buu_UsingFlashlight"))
             ply:EmitSound("items/flashlight1.wav")
             return !tostate
+        else
+            ply:SetNWBool("Buu_UsingFlashlight", tostate)
         end
     end
     hook.Add("PlayerSwitchFlashlight", "BuuBase_HandleFlashlight", BuuBase_HandleFlashlight)
@@ -2365,7 +2366,7 @@ if (CLIENT) then
         end
         
         -- If the flashlight is enabled
-        if (self:GetBuu_UsingFlashlight() && self.Owner:GetViewModel(0) == vm && self.CustomFlashlight) then
+        if (self.Owner:GetNWBool("Buu_UsingFlashlight") && self.Owner:GetViewModel(0) == vm && self.CustomFlashlight) then
             -- Make sure we can attach to the muzzle
             local attach = self:HandleMuzzleAttachmentHelper(vm)
             if (attach == nil) then return end
@@ -2437,7 +2438,7 @@ if (CLIENT) then
                 end
                 
                 -- If we're using the flashlight
-                if (wep:GetBuu_UsingFlashlight() && wep.CustomFlashlight) then
+                if (v:GetNWBool("Buu_UsingFlashlight") && wep.CustomFlashlight) then
                     local pos, ang = wep:GetBoneOrientation(v, "ValveBiped.Bip01_R_Hand")
                     
                     -- If the positions are invalid, stop
