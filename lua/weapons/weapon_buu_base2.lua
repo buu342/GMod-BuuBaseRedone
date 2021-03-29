@@ -940,6 +940,7 @@ function SWEP:ShootProjectile(mode)
         
         local numbul = mode.NumShots or 1
         local cone   = mode.Cone or 0.001
+        numbul = math.min(numbul, self:Clip1())
         for i=1, numbul do
             local ent = ents.Create(mode.Projectile) 
             
