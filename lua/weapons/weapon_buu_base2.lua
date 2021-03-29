@@ -83,11 +83,15 @@ SWEP.Quinary.Ammo        = "none"
                    Custom settings start here
 =============================================================*/
 
-SWEP.HoldType      = "pistol"                    -- "pistol", "revolver", "smg", "rifle", or "shotgun"
-SWEP.CrosshairType = 1                           -- None (0), Normal (1), Sniper (2), Shotgun (3)
-SWEP.EmptySound    = Sound("buu/base/empty.wav") -- Empty firing sound
-SWEP.MuzzleEffect  = "buu_muzzle"                -- Muzzleflash
-SWEP.MuzzleEffectS = "buu_muzzle_silenced"       -- Silenced muzzleflash
+SWEP.HoldType        = "pistol"                    -- "pistol", "revolver", "smg", "rifle", or "shotgun"
+SWEP.EmptySound      = Sound("buu/base/empty.wav") -- Empty firing sound
+SWEP.MuzzleEffect    = "buu_muzzle"                -- Muzzleflash
+SWEP.MuzzleEffectS   = "buu_muzzle_silenced"       -- Silenced muzzleflash
+
+SWEP.CrosshairType   = 1  -- None (0), Normal (1), Sniper (2), Shotgun (3)
+SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto generate the gap based on recoil+cone
+SWEP.CrosshairMove   = 50 -- The movement gap multiplier to use for the crosshair.
+SWEP.CrosshairRecoil = 5  -- The recoil gap multiplier to use for the crosshair.
 
 SWEP.LowAmmoWarnSound = -1 -- The sound to play to warn us when we're low ammo (-1 to not use) (Make sure to cache it with Sound(""))
 SWEP.LowAmmoWarnClip  = 10 -- How much ammo left in the clip for the above sound to play?
@@ -868,7 +872,7 @@ function SWEP:ShootCode(mode)
     local bullet    = {}
     bullet.Num      = numbul
     bullet.Src      = self.Owner:GetShootPos()
-    bullet.Dir      = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0) * 33):Forward()
+    bullet.Dir      = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
     bullet.Spread   = Vector(cone, cone, 0)
     bullet.Tracer   = 0
     bullet.Force    = 0.5*dmg
@@ -933,28 +937,33 @@ end
 
 function SWEP:ShootProjectile(mode)
     if SERVER then
-        local ent = ents.Create(mode.Projectile) 
         
-        -- Ensure the projectile was created
-        if (!IsValid(ent)) then return end
-        
-        -- Spawnt the projectile
-        ent.Force = mode.ProjectileForce
-        ent.Owner = self.Owner
-        ent.Inflictor = self
-        ent:SetPos(self.Owner:GetShootPos() + self.Owner:GetAimVector()*16)
-        ent:SetAngles(self.Owner:EyeAngles())
-        ent:SetOwner(self.Owner)
-        ent.Owner = self.Owner
-        ent.Inflictor = self
-        ent:Spawn()
-        
-        -- Enable physics and give it some force
-        local phys = ent:GetPhysicsObject()
-        if IsValid(phys)then 
-            local velocity = self.Owner:GetAimVector()
-            velocity = velocity*ent.Force
-            phys:ApplyForceCenter(velocity)
+        local numbul = mode.NumShots or 1
+        local cone   = mode.Cone or 0.001
+        for i=1, numbul do
+            local ent = ents.Create(mode.Projectile) 
+            
+            -- Ensure the projectile was created
+            if (!IsValid(ent)) then return end
+            
+            -- Spawnt the projectile
+            ent.Force = mode.ProjectileForce
+            ent.Owner = self.Owner
+            ent.Inflictor = self
+            ent:SetPos(self.Owner:GetShootPos() + self.Owner:GetAimVector()*16)
+            ent:SetAngles(self.Owner:EyeAngles())
+            ent:SetOwner(self.Owner)
+            ent.Owner = self.Owner
+            ent.Inflictor = self
+            ent:Spawn()
+            
+            -- Enable physics and give it some force
+            local phys = ent:GetPhysicsObject()
+            if IsValid(phys)then 
+                local velocity = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
+                velocity = velocity*ent.Force
+                phys:ApplyForceCenter(velocity)
+            end
         end
     end
 end
@@ -2650,7 +2659,7 @@ if (CLIENT) then
                     scale = 16
                 else
                     if (lastfirehud != self:GetBuu_FireTime()) then
-                        togap = togap + 10+mode.Recoil*5
+                        togap = togap + 10+mode.Recoil*self.CrosshairRecoil
                         lastfirehud = self:GetBuu_FireTime()
                     end
                     togap = Lerp(0.04, togap, 0)
@@ -2658,7 +2667,11 @@ if (CLIENT) then
                 if (self.Sniper) then
                     scale = scale/2
                 end
-                finalgap = Lerp(1, finalgap, movementgap*50+scale*40+togap+mode.Recoil*15)
+                if (!IsValidVariable(self.CrosshairGap)) then
+                    finalgap = Lerp(1, finalgap, movementgap*self.CrosshairMove+scale*40+togap+mode.Recoil*15)
+                else
+                    finalgap = Lerp(1, finalgap, (movementgap*self.CrosshairMove+scale*10+togap)*self.CrosshairGap)
+                end
                 
                 -- Set the crosshair X+Y where the player is looking in thirdperson, or the center of the screen in first person
                 if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
@@ -2716,9 +2729,13 @@ if (CLIENT) then
                     else
                         
                         -- Circular crosshair
-                        surface.DrawCircle(x, y, mode.Cone*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, mode.Cone*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, mode.Cone*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        local ga = mode.Cone
+                        if (IsValidVariable(self.CrosshairGap)) then
+                            ga = self.CrosshairGap
+                        end
+                        surface.DrawCircle(x, y, ga*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        surface.DrawCircle(x, y, ga*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        surface.DrawCircle(x, y, ga*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
                     end
                 end
             end
