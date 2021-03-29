@@ -1980,11 +1980,11 @@ if (CLIENT) then
             -- If just fired, reset the shooting animation timer
             if (self:GetBuu_FireTime() != lastfire) then
                 lastfire = self:GetBuu_FireTime()
-                ironfiretime = self:GetBuu_FireTime()
+                ironfiretime = CurTime()
             end
-        
+            
             -- If we just fired, handle ironsight shooting animations
-            if (ironfiretime > CurTime() && !self.UseNormalShootIron && IsValidVariable(self.IronSightsShootPos)) then
+            if (ironfiretime > CurTime()-0.04 && !self.UseNormalShootIron && IsValidVariable(self.IronSightsShootPos)) then
                 TargetVector = self.IronSightsPos + (self.IronSightsShootPos-self.IronSightsPos)
             else
                 TargetVector = self.IronSightsPos
