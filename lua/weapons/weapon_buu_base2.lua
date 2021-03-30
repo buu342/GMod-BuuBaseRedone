@@ -127,6 +127,7 @@ SWEP.Primary.CancelBurst      = true  -- Allow canceling burstfire early
 SWEP.Primary.DelayLastShot    = -1    -- Delay value to use when firing the last shot. -1 to not use
 SWEP.Primary.Projectile       = -1    -- Projectile entity to shoot. -1 to not use
 SWEP.Primary.ProjectileForce  = 10000 -- Projectile force
+SWEP.Primary.PitchOverride    = -1    -- Firing sound pitch (-1 to use default values)
 
 
 /*==================== Ironsight Settings ===================*/
@@ -626,10 +627,14 @@ function SWEP:PrimaryAttack()
             sound = mode.Sound[math.random(1, #mode.Sound)]
         end
         local volume = 100
+        local pitch = math.random(97, 102)
         if (mode.Silenced) then
             volume = 60
         end
-        self:EmitSound(sound, volume, math.random(97, 102), 1, self.ShootChannel)
+        if (IsValidVariable(mode.PitchOverride)) then
+            pitch = mode.PitchOverride+math.random(-3, 3)
+        end
+        self:EmitSound(sound, volume, pitch, 1, self.ShootChannel)
     end
     
     -- Clicking sound on low ammo
