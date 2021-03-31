@@ -1713,6 +1713,13 @@ function SWEP:Cleanup(holsterto)
     self.Owner.FixViewmodelColor = true
 end
 
+
+/*-----------------------------
+    MuzzleFlashEffect
+    Handles the muzzleflash effect emission
+    @Param Where to attach the effect to
+-----------------------------*/
+
 function SWEP:MuzzleFlashEffect(attachment)
     -- Select which muzzle effect to use
     local effect = self.MuzzleEffect
@@ -1735,16 +1742,28 @@ function SWEP:MuzzleFlashEffect(attachment)
     end
 end
 
+
+/*-----------------------------
+    MuzzleLightEffect
+    Handles the muzzle light emission
+    @Param Where to attach the light to
+-----------------------------*/
+
 function SWEP:MuzzleLightEffect(attachment)
     if (self.Silenced) then return end
-    
     local dlight = DynamicLight(self.Owner:EntIndex())
+    
+    -- If we managed to create a light
     if (dlight != nil) then
+    
+        -- If we have no attachment, the use our shoot pos instead
         if (attachment != nil) then
             dlight.pos = attachment.Pos
         else
             dlight.pos = self.Owner:GetShootPos()
         end
+        
+        -- Set the rest of the color parameters
         dlight.r = self.MuzzleLight.r
         dlight.g = self.MuzzleLight.g
         dlight.b = self.MuzzleLight.b
@@ -1754,6 +1773,13 @@ function SWEP:MuzzleLightEffect(attachment)
         dlight.DieTime = CurTime() + 0.3
     end
 end
+
+
+/*-----------------------------
+    ShellEjectEffect
+    Handles the (thirdperson) shell effect emission
+    @Param Where to attach the effect to
+-----------------------------*/
 
 function SWEP:ShellEjectEffect(attachment)
 
