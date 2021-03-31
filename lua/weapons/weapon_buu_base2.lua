@@ -83,10 +83,11 @@ SWEP.Quinary.Ammo        = "none"
                    Custom settings start here
 =============================================================*/
 
-SWEP.HoldType        = "pistol"                    -- "pistol", "revolver", "smg", "rifle", or "shotgun"
-SWEP.EmptySound      = Sound("buu/base/empty.wav") -- Empty firing sound
-SWEP.MuzzleEffect    = "buu_muzzle"                -- Muzzleflash
-SWEP.MuzzleEffectS   = "buu_muzzle_silenced"       -- Silenced muzzleflash
+SWEP.HoldType         = "pistol"                    -- "pistol", "revolver", "smg", "rifle", or "shotgun"
+SWEP.EmptySound       = Sound("buu/base/empty.wav") -- Empty firing sound
+SWEP.MuzzleEffect     = "buu_muzzle"                -- Muzzleflash effect
+SWEP.MuzzleEffectS    = "buu_muzzle_silenced"       -- Silenced muzzleflash effect
+SWEP.ThirdPersonShell = ""                          -- Third person bullet shell ejection effect
 
 SWEP.CrosshairType   = 1  -- None (0), Normal (1), Sniper (2), Shotgun (3)
 SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto generate the gap based on recoil+cone
@@ -118,16 +119,17 @@ SWEP.FireModeNames = {
     "Secondary",
 }
 
-SWEP.Primary.Silenced         = false -- Use a silenced muzzleflash?
-SWEP.Primary.SoundChannelSwap = false -- Swap between CHAN_WEAPON and another channel during shooting (Helps some weapons sound better)
-SWEP.Primary.BurstFire        = false -- Burst fire (Requires Automatic = false)
-SWEP.Primary.BurstCount       = 3     -- Number of burst shots
-SWEP.Primary.BurstTime        = 0.075 -- Time between burst shots
-SWEP.Primary.CancelBurst      = true  -- Allow canceling burstfire early
-SWEP.Primary.DelayLastShot    = -1    -- Delay value to use when firing the last shot. -1 to not use
-SWEP.Primary.Projectile       = -1    -- Projectile entity to shoot. -1 to not use
-SWEP.Primary.ProjectileForce  = 10000 -- Projectile force
-SWEP.Primary.PitchOverride    = -1    -- Firing sound pitch (-1 to use default values)
+SWEP.Primary.Silenced         = false    -- Use a silenced muzzleflash?
+SWEP.Primary.SoundChannelSwap = false    -- Swap between CHAN_WEAPON and another channel during shooting (Helps some weapons sound better)
+SWEP.Primary.BurstFire        = false    -- Burst fire (Requires Automatic = false)
+SWEP.Primary.BurstCount       = 3        -- Number of burst shots
+SWEP.Primary.BurstTime        = 0.075    -- Time between burst shots
+SWEP.Primary.CancelBurst      = true     -- Allow canceling burstfire early
+SWEP.Primary.DelayLastShot    = -1       -- Delay value to use when firing the last shot. -1 to not use
+SWEP.Primary.Projectile       = -1       -- Projectile entity to shoot. -1 to not use
+SWEP.Primary.ProjectileForce  = 10000    -- Projectile force
+SWEP.Primary.PitchOverride    = -1       -- Firing sound pitch (-1 to use default values)
+SWEP.Primary.Tracer           = "Tracer" -- Tracer effect
 
 
 /*==================== Ironsight Settings ===================*/
@@ -607,6 +609,7 @@ function SWEP:PrimaryAttack()
     self:SendWeaponAnim(anim)
     self.Owner:MuzzleFlash()
     self.Owner:SetAnimation(PLAYER_ATTACK1)
+    self:HandleThirdPersonEffects()
     
     -- Handle shooting sound channel
     if (!IsValidVariable(self.ShootChannel)) then
@@ -874,15 +877,16 @@ function SWEP:ShootCode(mode)
     end
 
     -- Create our bullet structure and fire it
-    local bullet    = {}
-    bullet.Num      = numbul
-    bullet.Src      = self.Owner:GetShootPos()
-    bullet.Dir      = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
-    bullet.Spread   = Vector(cone, cone, 0)
-    bullet.Tracer   = 0
-    bullet.Force    = 0.5*dmg
-    bullet.Damage   = dmg
-    bullet.Callback = HitImpact
+    local bullet      = {}
+    bullet.Num        = numbul
+    bullet.Src        = self.Owner:GetShootPos()
+    bullet.Dir        = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
+    bullet.Spread     = Vector(cone, cone, 0)
+    bullet.Tracer     = 1
+    bullet.TracerName = mode.Tracer or "nil"
+    bullet.Force      = 0.5*dmg
+    bullet.Damage     = dmg
+    bullet.Callback   = HitImpact
     self.Owner:FireBullets(bullet)
 
     -- Door destruction
@@ -973,6 +977,93 @@ function SWEP:ShootProjectile(mode)
         end
     end
 end
+
+
+/*-----------------------------
+    HandleThirdPersonEffects
+    Handles third person effect networking
+-----------------------------*/
+
+function SWEP:HandleThirdPersonEffects()
+    if (SERVER) then
+        net.Start("BuuBase_ThirdPersonEffect")
+            net.WriteEntity(self.Owner)
+            net.WriteEntity(self)
+        net.Broadcast()
+    elseif (!game.SinglePlayer()) then
+        ThirdPersonEffects(nil, self.Owner, self)
+    end
+end
+
+
+/*-----------------------------
+    ThirdPersonEffects
+    Emits third person effects clientsided
+    @Param The length of the network message
+    @Param The owner of the weapon
+    @Param The weapon
+-----------------------------*/
+
+function ThirdPersonEffects(len, ply, wep)
+    if (CLIENT && (game.SinglePlayer() || IsFirstTimePredicted() || len != nil)) then
+    
+        -- Check if we received this as a network message
+        if (len != nil) then
+            ply = net.ReadEntity()
+            wep = net.ReadEntity()
+            
+            -- Discard it if we received one that mentions us
+            if (ply == LocalPlayer() && !game.SinglePlayer()) then
+                return
+            end
+        end
+        
+        -- Ensure the attachment exists
+        local attach = wep:GetAttachment(1)
+        if (attach != nil) then
+        
+            -- Select which muzzle effect to use
+            local effect = wep.MuzzleEffect
+            if (wep:GetFireModeTable().Silenced) then
+                effect = wep.MuzzleEffectS
+            end
+            
+            -- If we have a valid effect
+            if (IsValidVariable(effect)) then
+            
+                -- Emit the effect
+                local fx = EffectData()
+                fx:SetOrigin(attach.Pos)
+                fx:SetEntity(wep)
+                fx:SetStart(attach.Pos)
+                fx:SetNormal(attach.Ang:Forward())
+                fx:SetAngles(attach.Ang)
+                fx:SetAttachment(1)
+                util.Effect(effect, fx)
+            end
+        end
+        
+        -- Emit third person shell
+        if (wep.ThirdPersonShell != "") then
+            local attach = wep:GetAttachment(2)
+            
+            -- Ensure the attachment exists
+            if (attach != nil) then
+            
+                -- Emit the effect
+                local fx = EffectData()
+                fx:SetOrigin(attach.Pos)
+                fx:SetEntity(wep)
+                fx:SetStart(attach.Pos)
+                fx:SetNormal(attach.Ang:Forward())
+                fx:SetAngles(attach.Ang)
+                fx:SetAttachment(2)
+                util.Effect(wep.ThirdPersonShell, fx)
+            end
+        end
+    end
+end
+net.Receive("BuuBase_ThirdPersonEffect", ThirdPersonEffects)
 
 
 /*-----------------------------
@@ -1543,7 +1634,7 @@ end
 
 /*-----------------------------
     HandleMagDropping
-    Handles magazine dropping logic
+    Handles magazine dropping networking
 -----------------------------*/
 
 function SWEP:HandleMagDropping()
@@ -1585,7 +1676,11 @@ function MagazineDrop(len, ply, wep)
     
         -- Create the prop
         local mag = ents.CreateClientProp()
-        mag:SetPos(ply:GetPos()+Vector(0, 0, 50))
+        if (ply != LocalPlayer() && ply:LookupBone("ValveBiped.Bip01_L_Hand")) then
+            mag:SetPos(ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand")))
+        else
+            mag:SetPos(ply:GetPos()+Vector(0, 0, 50))
+        end
         mag:SetAngles(ply:GetAngles())
         mag:SetModel(wep.MagModel)
         if (wep:Clip1() == 0) then
@@ -1656,7 +1751,6 @@ end
 -----------------------------*/
 
 function SWEP:FireAnimationEvent(pos, ang, event)
-
     -- Muzzle flash replacement
     if (event == 5001 || event == 21 || event == 22) then 
         if !IsValid(self.Owner) then return end
@@ -1856,6 +1950,7 @@ if (SERVER) then
     util.AddNetworkString("BuuBase_StartedSliding")
     util.AddNetworkString("BuuBase_DropMag")
     util.AddNetworkString("BuuBase_NetworkIronsightSingleplayer")
+    util.AddNetworkString("BuuBase_ThirdPersonEffect")
 
     
     /*-----------------------------
