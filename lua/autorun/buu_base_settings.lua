@@ -30,7 +30,8 @@ if CLIENT then
 				cl_buu_scopesensitivity = "0.3",
 				cl_buu_lowammowarn = "1",
                 cl_buu_slidetilt = "1",
-                cl_buu_thirdpersonlaser = "1"
+                cl_buu_thirdpersonlaser = "1",
+                cl_buu_thirdpersonlight = "1"
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -110,6 +111,11 @@ if CLIENT then
             panel:AddControl("CheckBox", {
 				Label = "Thirdperson Lasers",
 				Command = "cl_buu_thirdpersonlaser",
+			})
+            
+            panel:AddControl("CheckBox", {
+				Label = "Thirdperson Light",
+				Command = "cl_buu_thirdpersonlight",
 			})
         
             panel:AddControl("CheckBox", {
@@ -327,6 +333,10 @@ end
 
 if !ConVarExists("cl_buu_thirdpersonlaser") then
     CreateClientConVar("cl_buu_thirdpersonlaser", '1', FCVAR_ARCHIVE)
+end
+
+if !ConVarExists("cl_buu_thirdpersonlight") then
+    CreateClientConVar("cl_buu_thirdpersonlight", '1', FCVAR_ARCHIVE)
 end
 
 if !ConVarExists("cl_buu_magdrop") then

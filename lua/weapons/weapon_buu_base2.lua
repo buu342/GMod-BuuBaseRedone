@@ -87,7 +87,8 @@ SWEP.HoldType         = "pistol"                    -- "pistol", "revolver", "sm
 SWEP.EmptySound       = Sound("buu/base/empty.wav") -- Empty firing sound
 SWEP.MuzzleEffect     = "buu_muzzle"                -- Muzzleflash effect
 SWEP.MuzzleEffectS    = "buu_muzzle_silenced"       -- Silenced muzzleflash effect
-SWEP.ThirdPersonShell = ""                          -- Third person bullet shell ejection effect
+SWEP.ThirdPersonShell = "RifleShellEject"                          -- Third person bullet shell ejection effect
+SWEP.MuzzleLight      = Color(255, 105, 0)          -- Muzzle light. -1 to not use.
 
 SWEP.CrosshairType   = 1  -- None (0), Normal (1), Sniper (2), Shotgun (3)
 SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto generate the gap based on recoil+cone
@@ -607,7 +608,6 @@ function SWEP:PrimaryAttack()
     
     -- Play the shooting animation
     self:SendWeaponAnim(anim)
-    self.Owner:MuzzleFlash()
     self.Owner:SetAnimation(PLAYER_ATTACK1)
     self:HandleThirdPersonEffects()
     
@@ -1018,48 +1018,21 @@ function ThirdPersonEffects(len, ply, wep)
             end
         end
         
-        -- Ensure the attachment exists
+        -- Ensure the attachment exists and we're in third person
         local attach = wep:GetAttachment(1)
-        if (attach != nil) then
-        
-            -- Select which muzzle effect to use
-            local effect = wep.MuzzleEffect
-            if (wep:GetFireModeTable().Silenced) then
-                effect = wep.MuzzleEffectS
-            end
-            
-            -- If we have a valid effect
-            if (IsValidVariable(effect)) then
-            
-                -- Emit the effect
-                local fx = EffectData()
-                fx:SetOrigin(attach.Pos)
-                fx:SetEntity(wep)
-                fx:SetStart(attach.Pos)
-                fx:SetNormal(attach.Ang:Forward())
-                fx:SetAngles(attach.Ang)
-                fx:SetAttachment(1)
-                util.Effect(effect, fx)
-            end
+        if (attach != nil && (ply != LocalPlayer() || ply:ShouldDrawLocalPlayer()) && !game.SinglePlayer()) then
+            wep:MuzzleFlashEffect(attach)
         end
         
-        -- Emit third person shell
-        if (wep.ThirdPersonShell != "") then
-            local attach = wep:GetAttachment(2)
-            
-            -- Ensure the attachment exists
-            if (attach != nil) then
-            
-                -- Emit the effect
-                local fx = EffectData()
-                fx:SetOrigin(attach.Pos)
-                fx:SetEntity(wep)
-                fx:SetStart(attach.Pos)
-                fx:SetNormal(attach.Ang:Forward())
-                fx:SetAngles(attach.Ang)
-                fx:SetAttachment(2)
-                util.Effect(wep.ThirdPersonShell, fx)
-            end
+        -- Muzzle light
+        if (wep.MuzzleLight != nil && wep.MuzzleLight != -1 && GetConVar("cl_buu_thirdpersonlight"):GetBool()) then
+            wep:MuzzleLightEffect(attach)
+        end
+        
+        -- Emit third person shell if in third person
+        attach = wep:GetAttachment(2)
+        if (attach != nil && wep.ThirdPersonShell != "" && (ply != LocalPlayer() || ply:ShouldDrawLocalPlayer()) && !game.SinglePlayer()) then
+            wep:ShellEjectEffect(attach)
         end
     end
 end
@@ -1715,7 +1688,7 @@ net.Receive("BuuBase_DropMag", MagazineDrop)
 -----------------------------*/
 
 function SWEP:Cleanup(holsterto)
-    if self.Owner == nil then return end
+    if (self.Owner == nil) then return end
     
     if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel() != nil && IsValid(self.Owner:GetViewModel())) then
         for i=0, 9 do
@@ -1740,6 +1713,61 @@ function SWEP:Cleanup(holsterto)
     self.Owner.FixViewmodelColor = true
 end
 
+function SWEP:MuzzleFlashEffect(attachment)
+    -- Select which muzzle effect to use
+    local effect = self.MuzzleEffect
+    if (self:GetFireModeTable().Silenced) then
+        effect = self.MuzzleEffectS
+    end
+    
+    -- If we have a valid effect
+    if (IsValidVariable(effect)) then
+    
+        -- Emit the effect
+        local fx = EffectData()
+        fx:SetOrigin(attachment.Pos)
+        fx:SetEntity(self)
+        fx:SetStart(attachment.Pos)
+        fx:SetNormal(attachment.Ang:Forward())
+        fx:SetAngles(attachment.Ang)
+        fx:SetAttachment(1)
+        util.Effect(effect, fx)
+    end
+end
+
+function SWEP:MuzzleLightEffect(attachment)
+    if (self.Silenced) then return end
+    
+    local dlight = DynamicLight(self.Owner:EntIndex())
+    if (dlight != nil) then
+        if (attachment != nil) then
+            dlight.pos = attachment.Pos
+        else
+            dlight.pos = self.Owner:GetShootPos()
+        end
+        dlight.r = self.MuzzleLight.r
+        dlight.g = self.MuzzleLight.g
+        dlight.b = self.MuzzleLight.b
+        dlight.brightness = 2
+        dlight.Decay = 1024
+        dlight.Size = 256
+        dlight.DieTime = CurTime() + 0.3
+    end
+end
+
+function SWEP:ShellEjectEffect(attachment)
+
+    -- Emit the effect
+    local fx = EffectData()
+    fx:SetOrigin(attachment.Pos)
+    fx:SetEntity(self)
+    fx:SetStart(attachment.Pos)
+    fx:SetNormal(attachment.Ang:Forward())
+    fx:SetAngles(attachment.Ang)
+    fx:SetAttachment(2)
+    util.Effect(self.ThirdPersonShell, fx)
+end
+
 
 /*-----------------------------
     FireAnimationEvent
@@ -1751,29 +1779,19 @@ end
 -----------------------------*/
 
 function SWEP:FireAnimationEvent(pos, ang, event)
+    -- Don't draw thirdperson effects in multiplayer (because they don't work)
+    if (self.Owner:ShouldDrawLocalPlayer() && !game.SinglePlayer() && (event == 21 || event == 22 || event == 6001)) then
+        return true
+    end
+    
     -- Muzzle flash replacement
     if (event == 5001 || event == 21 || event == 22) then 
         if !IsValid(self.Owner) then return end
-        
-        -- Select which effect to use
-        local effect = self.MuzzleEffect
-        if (self:GetFireModeTable().Silenced) then
-            effect = self.MuzzleEffectS
-        end
-        
-        -- If we have no effect, then stop
-        if (!IsValidVariable(effect)) then
-            return false
-        end
-        
-        -- Use the muzzle effect
-        local fx = EffectData()
-        fx:SetOrigin(self.Owner:GetShootPos())
-        fx:SetEntity(self)
-        fx:SetStart(self.Owner:GetShootPos())
-        fx:SetNormal(self.Owner:GetAimVector())
-        fx:SetAttachment(1)
-        util.Effect(effect, fx)
+        local attachment = {
+            Pos = self.Owner:GetShootPos(), 
+            Ang = self.Owner:GetAimVector():Angle()
+        }
+        self:MuzzleFlashEffect(attachment)
         
         -- Disable original muzzleflash effect
         return true
