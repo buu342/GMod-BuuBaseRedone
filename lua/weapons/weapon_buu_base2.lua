@@ -2926,7 +2926,9 @@ if (CLIENT) then
         surface.DrawTexturedRect(x, y, w, h)
 
         -- Draw the ammo
-        draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()), "HudSelectionText", x+w, y+h-48, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0, 0, 0, 255))
+        if (self.Primary.ClipSize != -1) then
+            draw.SimpleTextOutlined(self:Clip1().."/"..self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()), "HudSelectionText", x+w, y+h-48, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP, 2, Color(0, 0, 0, 255))
+        end
         
         -- Draw the rest of the weapon info
         self:PrintWeaponInfo(x+w+20, y+h*0.95, alpha)
