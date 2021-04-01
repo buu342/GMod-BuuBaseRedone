@@ -1447,10 +1447,10 @@ end
 
 -- Initialize the lookup tables
 local holdanims = {
-    ["idle"] = {"pistol", "pistol", "pistol", "shotgun", "shotgun"},
-    ["aim"] = {"revolver", "revolver", "smg", "ar2", "ar2"},
-    ["reload"] = {"pistol", "revolver", "smg", "ar2", "shotgun"},
-    ["holster"] = {"normal", "normal", "normal", "passive", "passive"},
+    ["idle"] = {"pistol", "pistol", "pistol", "shotgun", "shotgun", "knife"},
+    ["aim"] = {"revolver", "revolver", "smg", "ar2", "ar2", "knife"},
+    ["reload"] = {"pistol", "revolver", "smg", "ar2", "shotgun", "knife"},
+    ["holster"] = {"normal", "normal", "normal", "passive", "passive", "normal",},
 }
 local holdtypes = {
     ["pistol"] = 1,
@@ -1458,6 +1458,7 @@ local holdtypes = {
     ["smg"] = 3,
     ["rifle"] = 4,
     ["shotgun"] = 5,
+    ["knife"] = 6,
 }
 function SWEP:HandleHoldtypes(anim)
     if (CLIENT && !IsFirstTimePredicted()) then return end
