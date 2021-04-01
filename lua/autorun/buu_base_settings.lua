@@ -352,49 +352,49 @@ end
 ===============================================================*/
 
 if !ConVarExists("sv_buu_ironsights") then
-    CreateConVar("sv_buu_ironsights", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_ironsights", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_crosshair") then
-    CreateConVar("sv_buu_crosshair", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_crosshair", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_sprinting") then
-    CreateConVar("sv_buu_sprinting", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_sprinting", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_nearwall") then
-    CreateConVar("sv_buu_nearwall", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_nearwall", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_ladder") then
-    CreateConVar("sv_buu_ladder", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_ladder", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_ironsightsway") then
-    CreateConVar("sv_buu_ironsightsway", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_ironsightsway", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_shotgunwreckdoors") then
-    CreateConVar("sv_buu_shotgunwreckdoors", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_shotgunwreckdoors", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_sniperbreath") then
-    CreateConVar("sv_buu_sniperbreath", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_sniperbreath", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_canslide") then
-    CreateConVar("sv_buu_canslide", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_canslide", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_slidedamage") then
-    CreateConVar("sv_buu_slidedamage", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_slidedamage", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_slideshoot") then
-    CreateConVar("sv_buu_slideshoot", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY)
+    CreateConVar("sv_buu_slideshoot", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
 
 if !ConVarExists("sv_buu_customflashlight") then
-    CreateClientConVar("sv_buu_customflashlight", '1', FCVAR_ARCHIVE)
+    CreateClientConVar("sv_buu_customflashlight", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
