@@ -1006,7 +1006,7 @@ end
 
 function ThirdPersonEffects(len, ply, wep)
     if (CLIENT && (game.SinglePlayer() || IsFirstTimePredicted() || len != nil)) then
-    
+
         -- Check if we received this as a network message
         if (len != nil) then
             ply = net.ReadEntity()
@@ -1626,6 +1626,28 @@ end
 
 
 /*-----------------------------
+    CreateDroppedMag
+    Creates the dropped magazine model
+    @Return The mag entity
+-----------------------------*/
+
+function SWEP:CreateDroppedMag()
+    local mag = ents.CreateClientProp()
+    if (self.Owner != LocalPlayer() && self.Owner:LookupBone("ValveBiped.Bip01_L_Hand")) then
+        mag:SetPos(self.Owner:GetBonePosition(self.Owner:LookupBone("ValveBiped.Bip01_L_Hand")))
+    else
+        mag:SetPos(self.Owner:GetPos()+Vector(0, 0, 50))
+    end
+    mag:SetAngles(self.Owner:GetAngles())
+    mag:SetModel(self.MagModel)
+    if (self:Clip1() == 0) then
+        mag:SetBodygroup(1, self.MagEmptyBodygroup)
+    end
+    return mag
+end
+
+
+/*-----------------------------
     MagazineDrop
     Drops a clientsided magazine on the floor
     @Param The length of the network message
@@ -1648,17 +1670,7 @@ function MagazineDrop(len, ply, wep)
         end
     
         -- Create the prop
-        local mag = ents.CreateClientProp()
-        if (ply != LocalPlayer() && ply:LookupBone("ValveBiped.Bip01_L_Hand")) then
-            mag:SetPos(ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_L_Hand")))
-        else
-            mag:SetPos(ply:GetPos()+Vector(0, 0, 50))
-        end
-        mag:SetAngles(ply:GetAngles())
-        mag:SetModel(wep.MagModel)
-        if (wep:Clip1() == 0) then
-            mag:SetBodygroup(1, wep.MagEmptyBodygroup)
-        end
+        local mag = wep:CreateDroppedMag()
         
         -- Spawn it and enable physics
         mag:Spawn()
