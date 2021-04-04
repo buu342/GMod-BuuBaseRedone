@@ -886,7 +886,7 @@ function SWEP:ShootCode(mode)
     bullet.TracerName = mode.Tracer or "nil"
     bullet.Force      = 0.5*dmg
     bullet.Damage     = dmg
-    bullet.Callback   = HitImpact
+    bullet.Callback   = function(attacker, tr, dmginfo) self:BulletCallback(attacker, tr, dmginfo) end
     self.Owner:FireBullets(bullet)
 
     -- Door destruction
@@ -935,6 +935,18 @@ function SWEP:ShootCode(mode)
         -- Reset the door after some time
         timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
     end
+end
+
+
+/*-----------------------------
+    BulletCallback
+    Allows the programmer to add stuff to when a bullet hits something
+    @Param The attacker
+    @Param The bullet trace
+    @Param The bullet damageinfo
+-----------------------------*/
+
+function SWEP:BulletCallback(attacker, tr, dmginfo)
 end
 
 
