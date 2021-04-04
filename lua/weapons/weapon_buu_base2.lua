@@ -104,6 +104,7 @@ SWEP.CanNearWall      = true -- Allow being near a wall to holster the weapon?
 SWEP.CanLadder        = true -- Allow being on a ladder causing the weapon to holster?
 SWEP.CanSlide         = true -- Allow sliding
 SWEP.CanSmoke         = true -- Allow smoke trail if firing for very long
+SWEP.CanLowAmmoClick  = true -- Allow the clicking sound when running low on ammo?
 SWEP.CustomFlashlight = true -- Use custom flashlight
 
 
@@ -166,6 +167,14 @@ SWEP.UseNormalShootIron = true
 -- the gun going back when you shoot. -1 to not use.
 SWEP.IronSightsShootPos = -1 
 SWEP.IronSightsShootAng = -1
+
+
+/*==================== Bullet Penetration ===================*/
+
+SWEP.CanPenetrate           = false
+SWEP.PenetrateCount         = 3
+SWEP.PenetrateMax           = 32
+SWEP.PenetrateDamageFalloff = 0.5
 
 
 /*====================== Reload Timers ======================*/
@@ -641,7 +650,7 @@ function SWEP:PrimaryAttack()
     end
     
     -- Clicking sound on low ammo
-    if (self:Clip1() <= math.ceil(self:GetMaxClip1()/4) && GetConVar("cl_buu_lowammowarn"):GetBool()) then
+    if (self:Clip1() <= math.ceil(self:GetMaxClip1()/4) && GetConVar("cl_buu_lowammowarn"):GetBool() && self.CanLowAmmoClick) then
         self:EmitSound("weapons/shotgun/shotgun_empty.wav", 50, 100, 1, CHAN_ITEM)
     end
     
@@ -941,12 +950,46 @@ end
 /*-----------------------------
     BulletCallback
     Allows the programmer to add stuff to when a bullet hits something
+    Currently used for bullet penetration
     @Param The attacker
     @Param The bullet trace
     @Param The bullet damageinfo
+    @Param The bullet penetration count
 -----------------------------*/
 
-function SWEP:BulletCallback(attacker, tr, dmginfo)
+function SWEP:BulletCallback(attacker, tr, dmginfo, pencount)
+    if (!self.CanPenetrate) then return end
+    
+    -- Correct the penetration count if it's nil, and ensure we don't penetrate more
+    pencount = pencount or 0
+    if (pencount+1 > self.PenetrateMax) then return end
+    
+    -- Create a trace on where we hit, in the direction the bullet was going
+    local PenDir = tr.Normal*self.PenetrateMax
+    local trace  = {}
+    trace.endpos = tr.HitPos
+    trace.start  = tr.HitPos + PenDir
+    trace.mask   = MASK_SHOT
+    trace.filter = {self.Owner}
+    trace        = util.TraceLine(trace) 
+    
+    -- Ensure the bullet penetrated
+    if (trace.StartSolid || trace.Fraction >= 1.0 || tr.Fraction <= 0.0) then return end
+        
+    -- Fire another bullet from the hit position
+    local dmg = dmginfo:GetDamage()*self.PenetrateDamageFalloff
+    local bullet = {}    
+    bullet.Num        = 1
+    bullet.Src        = trace.HitPos
+    bullet.Dir        = tr.Normal
+    bullet.Spread     = Vector(0, 0, 0)
+    bullet.Tracer     = 1
+    bullet.Force      = 0.5*dmg
+    bullet.TracerName = self:GetFireModeTable().Tracer
+    bullet.Damage     = dmg
+    bullet.Callback   = function(attacker, tr, dmginfo) self:BulletCallback(attacker, tr, dmginfo, pencount+1) end
+    attacker.FireBullets(attacker, bullet, true)
+    return true
 end
 
 

@@ -189,6 +189,7 @@ if CLIENT then
                 sv_buu_slidedamage = "1",
                 sv_buu_slideshoot = "1",
 				sv_buu_customflashlight = "1",
+				sv_buu_bulletpenetration = "1",
 			}
 
 			panel:AddControl("ComboBox", BuuBaseSettings)
@@ -238,6 +239,10 @@ if CLIENT then
 			panel:AddControl("CheckBox", {
 				Label = "Snipers can hold breath",
 				Command = "sv_buu_sniperbreath",
+			})
+            panel:AddControl("CheckBox", {
+				Label = "Allow bullet penetration",
+				Command = "sv_buu_bulletpenetration",
 			})
 			
 			panel:AddControl("Label", {Text = ""})
@@ -397,4 +402,8 @@ end
 
 if !ConVarExists("sv_buu_customflashlight") then
     CreateClientConVar("sv_buu_customflashlight", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
+end
+
+if !ConVarExists("sv_buu_bulletpenetration") then
+    CreateConVar("sv_buu_bulletpenetration", '1', FCVAR_ARCHIVE + FCVAR_NOTIFY + FCVAR_REPLICATED)
 end
