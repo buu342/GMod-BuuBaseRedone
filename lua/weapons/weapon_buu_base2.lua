@@ -140,6 +140,7 @@ SWEP.IronsightFOV   = 65   -- FOV when in ironsights (-1 to disable)
 SWEP.IronsightSway  = 2    -- Ironsight sway amount
 SWEP.IronsightSound = 2    -- Sound to play when ironsighting. None (0), pistol (1), smg (2), rifle (3)
 SWEP.IronsightRoll  = true -- Subtly roll the weapon when going into ironsights
+SWEP.IronsightVMFOV = 0    -- Viewmodel Ironsight FOV. 0 for no change.
 
 
 /*================= Lua Viewmodel Animations ================*/
@@ -989,7 +990,6 @@ function SWEP:BulletCallback(attacker, tr, dmginfo, pencount)
     bullet.Damage     = dmg
     bullet.Callback   = function(attacker, tr, dmginfo) self:BulletCallback(attacker, tr, dmginfo, pencount+1) end
     attacker.FireBullets(attacker, bullet, true)
-    return true
 end
 
 
@@ -2143,6 +2143,8 @@ if (CLIENT) then
     local lastfire = 0
     local ironfiretime = 0
     local maxroll = 30 -- How much to roll the gun when going into ironsights
+    local vmfov = nil
+    local vmfov_t = nil
     function SWEP:ManipulateViewModel(pos, ang)
         if !IsValid(self.Owner) then return end
         
@@ -2157,6 +2159,12 @@ if (CLIENT) then
         end
         if (self.EyePosition == nil) then
             self.EyePosition = Angle(0, 0, 0)
+        end
+        if (vmfov == nil) then
+            vmfov = self.ViewModelFOV
+        end
+        if (vmfov_t == nil) then
+            vmfov_t = self.ViewModelFOV
         end
         
         
@@ -2181,6 +2189,7 @@ if (CLIENT) then
         -- Smoothly transition the vectors with the target values
         FinalVector = LerpVector(animspeed*FrameTime(), FinalVector, TargetVector) 
         FinalVectorAngle = LerpVector(animspeed*FrameTime(), FinalVectorAngle, TargetVectorAngle) 
+        self.ViewModelFOV = Lerp(animspeed*FrameTime(), self.ViewModelFOV, vmfov_t)
         
         -- Change the angles and positions with the new vectors
         ang:RotateAroundAxis(ang:Right(), FinalVectorAngle.x)
@@ -2220,26 +2229,33 @@ if (CLIENT) then
             
             -- Modify the final angle with the roll
             TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3), 0, -targettime)
+            if (self.IronsightVMFOV != 0) then
+                vmfov_t = self.IronsightVMFOV
+            end
         elseif (self:GetBuu_OnLadder()) then 
             
             -- Lower the gun if on a ladder
             TargetVector = Vector(0, 0, 2)
             TargetVectorAngle = Vector(-40, 0, 0)
+            vmfov_t = vmfov
         elseif (self:GetBuu_Sprinting() && IsValidVariable(self.RunArmPos) && !self:GetBuu_Reloading() && (!self.Owner:KeyDown(IN_DUCK) || (self.Owner:GetNWBool("Buu_Sliding") && !GetConVar("sv_buu_slideshoot"):GetBool()))) then 
             
             -- Do the sprinting and/or sliding animation
             TargetVector = self.RunArmPos
             TargetVectorAngle = self.RunArmAngle
+            vmfov_t = vmfov
         elseif (self.Owner:GetNWBool("Buu_Sliding") && GetConVar("cl_buu_slidetilt"):GetBool()) then 
         
             -- Tilt the viewmodel if we're sliding
             TargetVector = Vector(0, 0, 0)
             TargetVectorAngle = Vector(0, 0, 20)   
+            vmfov_t = vmfov
         elseif (self:GetBuu_NearWall() && IsValidVariable(self.RunArmPos) && (self:Clip1() == self:GetMaxClip1() || !self:GetBuu_Reloading())) then 
         
             -- Do "Near Wall" animation
             TargetVector = self.RunArmPos
             TargetVectorAngle = self.RunArmAngle
+            vmfov_t = vmfov
         elseif (self.Owner:Crouching() && !self:GetBuu_NearWall()) then 
         
             -- Change the position if crouching
@@ -2248,6 +2264,7 @@ if (CLIENT) then
         else
             TargetVector = Vector(0, 0, 0)
             TargetVectorAngle = Vector(0, 0, 0)
+            vmfov_t = vmfov
         end
         
         -- Calculate the next ironsight tiime
