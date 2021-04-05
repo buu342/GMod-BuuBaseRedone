@@ -1689,13 +1689,19 @@ end
 
 function SWEP:CreateDroppedMag()
     local mag = ents.CreateClientProp()
+    
+    -- Create the magazine from the hand bone if it exists, otherwise from our butt
     if (self.Owner != LocalPlayer() && self.Owner:LookupBone("ValveBiped.Bip01_L_Hand")) then
         mag:SetPos(self.Owner:GetBonePosition(self.Owner:LookupBone("ValveBiped.Bip01_L_Hand")))
     else
         mag:SetPos(self.Owner:GetPos()+Vector(0, 0, 50))
     end
+    
+    -- Set the angles and model
     mag:SetAngles(self.Owner:GetAngles())
     mag:SetModel(self.MagModel)
+    
+    -- Hide the bullet in the mag if we're out of ammo
     if (self:Clip1() == 0) then
         mag:SetBodygroup(1, self.MagEmptyBodygroup)
     end
@@ -1922,8 +1928,8 @@ end
 /*-----------------------------
     BuuBase_Sliding
     Allows the player to slide on the floor
-    @param The Player
-    @param The move data
+    @Param The Player
+    @Param The move data
 -----------------------------*/
 
 local function BuuBase_Sliding(ply, mv)
@@ -2041,8 +2047,8 @@ hook.Add("Move", "BuuBase_Sliding", BuuBase_Sliding)
 /*-----------------------------
     BuuBase_Sliding_Thirdperson
     Handles the sliding animation in thirdperson
-    @param The Player
-    @param The player's velocity
+    @Param The Player
+    @Param The player's velocity
 -----------------------------*/
 
 local function BuuBase_Sliding_Thirdperson(ply, vel)
@@ -2068,8 +2074,8 @@ if (SERVER) then
     /*-----------------------------
         BuuBase_ConfirmSlide
         Confirms if the player can actually slide serverside
-        @param The length of incoming network data
-        @param The player to check
+        @Param The length of incoming network data
+        @Param The player to check
     -----------------------------*/
     
     local function BuuBase_ConfirmSlide(len, ply)
@@ -2091,8 +2097,8 @@ if (SERVER) then
     /*-----------------------------
         BuuBase_HandleFlashlight
         Stops flashlight serverside if using buu base
-        @param The player
-        @param Whether it was requested to be turned on or off
+        @Param The player
+        @Param Whether it was requested to be turned on or off
     -----------------------------*/
     
     function BuuBase_HandleFlashlight(ply, tostate)
@@ -2128,7 +2134,7 @@ if (CLIENT) then
     /*-----------------------------
         ManipulateViewModel
         Performs Lua based viewmodel animations
-        @param  The position of the viewmodel
+        @Param  The position of the viewmodel
         @Param  The angle of the viewmodel
         @Return The final position and angle
     -----------------------------*/
@@ -2418,7 +2424,7 @@ if (CLIENT) then
     /*-----------------------------
         ManipulateViewModel
         Performs Lua based viewmodel animations
-        @param  The position of the viewmodel
+        @Param  The position of the viewmodel
         @Param  The angle of the viewmodel
         @Return The final position and angle
     -----------------------------*/
@@ -2804,8 +2810,8 @@ if (CLIENT) then
     /*-----------------------------
         BuuBase_NetworkIronsightSingleplayer
         Fixes a bug with ironsight time in Singleplayer
-        @param The length of incoming network data
-        @param The player to check
+        @Param The length of incoming network data
+        @Param The player to check
     -----------------------------*/
     
     local function BuuBase_NetworkIronsightSingleplayer(len, ply)
@@ -2828,7 +2834,7 @@ if (CLIENT) then
     
     /*-----------------------------
         PostDrawScope
-        Allows extra stuff before drawing the scope
+        Allows extra stuff after drawing the scope
         For developers to use
     -----------------------------*/
 
