@@ -140,7 +140,7 @@ SWEP.IronsightFOV   = 65   -- FOV when in ironsights (-1 to disable)
 SWEP.IronsightSway  = 2    -- Ironsight sway amount
 SWEP.IronsightSound = 2    -- Sound to play when ironsighting. None (0), pistol (1), smg (2), rifle (3)
 SWEP.IronsightRoll  = true -- Subtly roll the weapon when going into ironsights
-SWEP.IronsightVMFOV = 0    -- Viewmodel Ironsight FOV. 0 for no change.
+SWEP.IronsightVMFOV = 1    -- Viewmodel Ironsight FOV multiplier. 1 for no change.
 
 
 /*================= Lua Viewmodel Animations ================*/
@@ -791,7 +791,7 @@ end
 
 /*-----------------------------
     Think
-    Logic that runs every frame
+    Logic that runs every tick
 -----------------------------*/
 
 function SWEP:Think()
@@ -2230,7 +2230,7 @@ if (CLIENT) then
             -- Modify the final angle with the roll
             TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3), 0, -targettime)
             if (self.IronsightVMFOV != 0) then
-                vmfov_t = self.IronsightVMFOV
+                vmfov_t = vmfov*self.IronsightVMFOV
             end
         elseif (self:GetBuu_OnLadder()) then 
             
