@@ -18,7 +18,7 @@ AddCSLuaFile()
 SWEP.Author       = "Buu342"
 SWEP.Name         = "Buu Base"
 SWEP.Contact      = "buu342@hotmail.com"
-SWEP.Purpose      = "To act as a base for my sweps"
+SWEP.Purpose      = "To act as a base for my SWEPs"
 SWEP.Instructions = "Left click to shoot, right click to use sights."
 SWEP.Category     = "Buu342"
 
@@ -529,7 +529,7 @@ function SWEP:Holster(holsterto)
     -- Clean up the flashlight and viewmodel color if we were removed suddenly
     self:Cleanup(holsterto)
     
-    -- otherwise, allow holstering
+    -- Otherwise, allow holstering
     return true
 end
 
