@@ -1795,6 +1795,7 @@ end
 -----------------------------*/
 
 function SWEP:MuzzleFlashEffect(attachment)
+
     -- Select which muzzle effect to use
     local effect = self.MuzzleEffect
     if (self:GetFireModeTable().Silenced) then
@@ -2236,7 +2237,7 @@ if (CLIENT) then
             -- Modify the final angle with the roll
             TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3), 0, -targettime)
             if (self.IronsightVMFOV != 0) then
-                vmfov_t = vmfov*self.IronsightVMFOV
+                vmfov_t = vmfov*self.IronsightVMFOV+(LocalPlayer():GetInfoNum("fov_desired", 75)-75)
             end
         elseif (self:GetBuu_OnLadder()) then 
             
