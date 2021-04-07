@@ -2159,6 +2159,7 @@ if (CLIENT) then
         local weapon = ply:GetActiveWeapon()
         local walkspeed = self.Owner:GetVelocity():Length() 
         local Tr = self.Owner:GetEyeTrace()
+        local fovcorrect = (LocalPlayer():GetInfoNum("fov_desired", 75)-75)
         
         -- Initialize uninitialized object variables
         if (self.LastEyePosition == nil) then
@@ -2237,7 +2238,11 @@ if (CLIENT) then
             -- Modify the final angle with the roll
             TargetVectorAngle = self.IronSightsAng + Vector(-targettime/(maxroll/3), 0, -targettime)
             if (self.IronsightVMFOV != 0) then
-                vmfov_t = vmfov*self.IronsightVMFOV+(LocalPlayer():GetInfoNum("fov_desired", 75)-75)
+                local add = 0
+                if (!self.Sniper) then
+                    add = fovcorrect
+                end
+                vmfov_t = vmfov*self.IronsightVMFOV+add
             end
         elseif (self:GetBuu_OnLadder()) then 
             
@@ -2465,20 +2470,20 @@ if (CLIENT) then
             end
             
             -- Ironsight FOV
-            if !ply:GetActiveWeapon().Sniper then
+            if (!ply:GetActiveWeapon().Sniper) then
                 if (myfov == nil) then
-                    myfov = LocalPlayer():GetInfoNum("fov_desired", 90)
-                    myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
+                    myfov = LocalPlayer():GetInfoNum("fov_desired", 75)
+                    myfov_t = LocalPlayer():GetInfoNum("fov_desired", 75)
                 end
-                local m_PlayerCam = GAMEMODE:CalcView(ply,origin,angles,fov,vm_origin,vm_angles)
+                local m_PlayerCam = GAMEMODE:CalcView(ply, origin, angles, fov, vm_origin, vm_angles)
                 m_PlayerCam.origin = origin
                 m_PlayerCam.angles = angles
                 m_PlayerCam.fov = myfov
-                myfov = Lerp(10*FrameTime(),myfov,myfov_t)
+                myfov = Lerp(10*FrameTime(), myfov, myfov_t)
                 if (ply:GetActiveWeapon():GetBuu_Ironsights() && IsValidVariable(ply:GetActiveWeapon().IronsightFOV)) then
                     myfov_t = ply:GetActiveWeapon().IronsightFOV
                 else 
-                    myfov_t = LocalPlayer():GetInfoNum("fov_desired", 90)
+                    myfov_t = LocalPlayer():GetInfoNum("fov_desired", 75)
                 end
                 return m_PlayerCam, GAMEMODE:CalcView(ply, origin, angles, fov, vm_origin, vm_angles)
             end
