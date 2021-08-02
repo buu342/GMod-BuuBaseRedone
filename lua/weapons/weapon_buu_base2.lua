@@ -1098,7 +1098,7 @@ function ThirdPersonEffects(len, ply, wep)
         
         -- Ensure the attachment exists and we're in third person
         local attach = wep:GetAttachment(1)
-        if (attach != nil && (ply != LocalPlayer() || ply:ShouldDrawLocalPlayer() || wep.Owner:IsNPC()) && !game.SinglePlayer()) then
+        if (attach != nil && ((ply != LocalPlayer() || ply:ShouldDrawLocalPlayer()) && !game.SinglePlayer()) || wep.Owner:IsNPC()) then
             wep:MuzzleFlashEffect(attach)
         end
         
