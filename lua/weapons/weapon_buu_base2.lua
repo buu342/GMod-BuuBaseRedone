@@ -432,7 +432,7 @@ function SWEP:Initialize()
     
     -- Initialize holdtype for NPCs
     if (self.Owner:IsNPC()) then
-        self:HandleHoldtypes("idle")
+        self:HandleHoldtypes(nil)
     end
 end
 
@@ -557,7 +557,7 @@ end
 function SWEP:PrimaryAttack() 
     -- Get the currently active weapon mode
     local mode = self:GetFireModeTable()
-
+    
     -- Allow changing weapon mode
     if (self.ChangeFireModes && self.Owner:IsPlayer() && self.Owner:KeyDown(IN_USE)) then
         if (self:GetNextPrimaryFire() < CurTime() && !self:GetBuu_Reloading() && self.Owner:KeyPressed(IN_ATTACK)) then
@@ -582,6 +582,9 @@ function SWEP:PrimaryAttack()
     if (self:Clip1() == 0) then 
         self:EmitSound(self.EmptySound, 40, 100, 1, CHAN_ITEM)
         self:SetNextPrimaryFire(CurTime() + 0.2)
+        if (self.Owner:IsNPC()) then
+            self:Reload()
+        end
         return 
     end 
     
@@ -750,7 +753,15 @@ end
 -----------------------------*/
 
 function SWEP:Reload()
-    if (self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) <= 0) then return end
+
+    -- If we're an NPC, set the schedule to reload
+    if (self.Owner:IsNPC()) then
+        self.Owner:SetSchedule(SCHED_RELOAD)
+        return
+    end
+
+    -- Otherwise, check for whether we can reload
+    if (self.Owner:IsPlayer() && self.Owner:GetAmmoCount(self:GetPrimaryAmmoType()) <= 0) then return end
     if (self:GetNextPrimaryFire() > CurTime()) then return end
     if (IsValidVariable(self.IronsightOutAnim) && self:GetBuu_Ironsights()) then return end
     
@@ -1045,8 +1056,11 @@ function SWEP:ShootProjectile(mode)
             -- Enable physics and give it some force
             local phys = ent:GetPhysicsObject()
             if IsValid(phys)then 
-                local velocity = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
-                velocity = velocity*ent.Force
+                local velocity = self.Owner:EyeAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33
+                if (self.Owner:IsPlayer()) then
+                   velocity = velocity + self.Owner:GetViewPunchAngles()
+                end
+                velocity = (velocity:Forward())*ent.Force
                 phys:ApplyForceCenter(velocity)
             end
         end
@@ -1531,10 +1545,7 @@ local holdanims = {
     ["holster"] = {"normal", "normal", "normal", "passive", "passive", "normal",},
 }
 local holdanimsnpc = {
-    ["idle"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
-    ["aim"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
-    ["reload"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
-    ["holster"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol",},
+    "pistol", "pistol", "smg", "ar2", "shotgun", "pistol",
 }
 local holdtypes = {
     ["pistol"] = 1,
@@ -1554,7 +1565,10 @@ function SWEP:HandleHoldtypes(anim)
         if (self.Owner:GetClass() == "npc_metropolice" && self.HoldType == "rifle") then
             self.HoldType = "smg"
         end
-        self:SetHoldType(holdanimsnpc[anim][holdtypes[self.HoldType]] or "smg")
+        if (self.Owner:GetClass() == "npc_combine_s" && (self.HoldType == "pistol" || self.HoldType == "revolver")) then
+            self.HoldType = "smg"
+        end
+        self:SetHoldType(holdanimsnpc[holdtypes[self.HoldType]] or "smg")
         self:SetWeaponHoldType(self:GetHoldType())
     end
 end
