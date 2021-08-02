@@ -429,6 +429,11 @@ function SWEP:Initialize()
         self.LensTable.w = 2*ScopeTable.l
         self.LensTable.h = 2*ScopeTable.l
     end
+    
+    -- Initialize holdtype for NPCs
+    if (self.Owner:IsNPC()) then
+        self:HandleHoldtypes("idle")
+    end
 end
 
 
@@ -554,7 +559,7 @@ function SWEP:PrimaryAttack()
     local mode = self:GetFireModeTable()
 
     -- Allow changing weapon mode
-    if (self.ChangeFireModes && self.Owner:KeyDown(IN_USE)) then
+    if (self.ChangeFireModes && self.Owner:IsPlayer() && self.Owner:KeyDown(IN_USE)) then
         if (self:GetNextPrimaryFire() < CurTime() && !self:GetBuu_Reloading() && self.Owner:KeyPressed(IN_ATTACK)) then
             self:HandleFireModeChange()
         end
@@ -599,7 +604,7 @@ function SWEP:PrimaryAttack()
     end
     
     -- Do animations
-    -- TODO: Fix the logic here
+    -- TODO: Fix the logic here because it's messy
     local anim = mode.Anim
     if (self:Clip1()-1 <= 0 && (IsValidVariable(mode.AnimEmpty) || IsValidVariable(mode.AnimIronEmpty))) then
         if (self:GetBuu_Ironsights() && !self.UseNormalShootIron && IsValidVariable(mode.AnimIronEmpty)) then
@@ -641,12 +646,16 @@ function SWEP:PrimaryAttack()
         end
         local volume = 100
         local pitch = math.random(97, 102)
+        if (self.Owner:IsNPC()) then 
+            volume = 75 -- Needs to be 75, or sound distances break?
+        end
         if (mode.Silenced) then
             volume = 60
         end
         if (IsValidVariable(mode.PitchOverride)) then
             pitch = mode.PitchOverride+math.random(-3, 3)
         end
+        
         self:EmitSound(sound, volume, pitch, 1, self.ShootChannel)
     end
     
@@ -656,11 +665,13 @@ function SWEP:PrimaryAttack()
     end
     
     -- Handle viewpunch
-    local recoil = mode.Recoil or 1
-    if (self:GetBuu_Ironsights()) then
-        recoil = recoil/2
+    if (self.Owner:IsPlayer()) then
+        local recoil = mode.Recoil or 1
+        if (self:GetBuu_Ironsights()) then
+            recoil = recoil/2
+        end
+        self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5, -2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1, 1)*recoil, 0))
     end
-    self.Owner:ViewPunch(Angle(util.SharedRandom("ViewPunchBuu", -0.5, -2.5)*recoil, util.SharedRandom("ViewPunchBuu", -1, 1)*recoil, 0))
     
     -- If we're not using an autosniper, unscope
     if (self.Sniper && !self.AutoSniper && self:GetBuu_Ironsights()) then
@@ -673,7 +684,7 @@ function SWEP:PrimaryAttack()
     end
     
     -- Change the owner's view angles permanantly
-    if ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted())) then
+    if (self.Owner:IsPlayer() && ((game.SinglePlayer() && SERVER) || (!game.SinglePlayer() && CLIENT && IsFirstTimePredicted()))) then
         local eyeang = self.Owner:EyeAngles()
         eyeang.pitch = eyeang.pitch - (mode.Delay*0.5)
         eyeang.yaw = eyeang.yaw - (mode.Delay*math.random(-1, 1)*0.25)
@@ -710,7 +721,11 @@ function SWEP:PrimaryAttack()
     
     -- Set timers and delay
     self:SetNextPrimaryFire(CurTime() + delay)
-    self:SetBuu_GotoIdle(CurTime() + self.Owner:GetViewModel():SequenceDuration())
+    if (self.Owner:IsPlayer()) then
+        self:SetBuu_GotoIdle(CurTime() + self.Owner:GetViewModel():SequenceDuration())
+    else
+        self:SetBuu_GotoIdle(CurTime() + 0.1)
+    end
     self:SetBuu_FireTime(CurTime())
     
     -- Disable lag compensation
@@ -768,7 +783,6 @@ function SWEP:Reload()
         
         -- Play the reload animation
         self:SendWeaponAnim(anim)
-        self:HandleHoldtypes("reload")
         self.Owner:SetAnimation(PLAYER_RELOAD)
         self:SetBuu_Reloading(true)
         self:SetBuu_GotoIdle(CurTime()+self.Owner:GetViewModel():SequenceDuration())
@@ -877,9 +891,13 @@ end
 -----------------------------*/
 
 function SWEP:ShootCode(mode)
-    local dmg = mode.Damage or 0
+    local dmg    = mode.Damage or 0
     local numbul = mode.NumShots or 1
     local cone   = mode.Cone or 0.01
+    local viewp  = Angle(0, 0, 0)
+    if (self.Owner:IsPlayer()) then
+        viewp = self.Owner:GetViewPunchAngles()
+    end
     
     -- If we have ironsights, reduce the spread
     if (self:GetBuu_Ironsights()) then
@@ -890,7 +908,7 @@ function SWEP:ShootCode(mode)
     local bullet      = {}
     bullet.Num        = numbul
     bullet.Src        = self.Owner:GetShootPos()
-    bullet.Dir        = (self.Owner:EyeAngles() + self.Owner:GetViewPunchAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
+    bullet.Dir        = (self.Owner:EyeAngles() + viewp + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
     bullet.Spread     = Vector(cone, cone, 0)
     bullet.Tracer     = 1
     bullet.TracerName = mode.Tracer or "nil"
@@ -900,50 +918,52 @@ function SWEP:ShootCode(mode)
     self.Owner:FireBullets(bullet)
 
     -- Door destruction
-    local tr = self.Owner:GetEyeTrace()
-    if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
-    if (tr.HitPos:Distance(self.Owner:GetShootPos()) > 250) then return end
-    if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
+    if (self.Owner:IsPlayer()) then
+        local tr = self.Owner:GetEyeTrace()
+        if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
+        if (tr.HitPos:Distance(self.Owner:GetShootPos()) > 250) then return end
+        if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
 
-        -- Force the door to open
-        tr.Entity:Fire("open", "", 0.001)
-        tr.Entity:Fire("unlock", "", 0.001)
-        
-        -- Get data from the door
-        local pos = tr.Entity:GetPos()
-        local ang = tr.Entity:GetAngles()
-        local model = tr.Entity:GetModel()
-        local skin = tr.Entity:GetSkin()
-        
-        -- Disable the real door
-        tr.Entity:SetNotSolid(true)
-        tr.Entity:SetNoDraw(true)
-        
-        -- Helper function for enabling the door
-        local function ResetDoor(door, fakedoor)
-            door:SetNotSolid(false)
-            door:SetNoDraw(false)
-            fakedoor:Remove()
+            -- Force the door to open
+            tr.Entity:Fire("open", "", 0.001)
+            tr.Entity:Fire("unlock", "", 0.001)
+            
+            -- Get data from the door
+            local pos = tr.Entity:GetPos()
+            local ang = tr.Entity:GetAngles()
+            local model = tr.Entity:GetModel()
+            local skin = tr.Entity:GetSkin()
+            
+            -- Disable the real door
+            tr.Entity:SetNotSolid(true)
+            tr.Entity:SetNoDraw(true)
+            
+            -- Helper function for enabling the door
+            local function ResetDoor(door, fakedoor)
+                door:SetNotSolid(false)
+                door:SetNoDraw(false)
+                fakedoor:Remove()
+            end
+            
+            -- Get the angles and calculate the force
+            local norm = (pos - self.Owner:GetPos())
+            norm:Normalize()
+            local push = 2000 * norm
+            local ent = ents.Create("prop_physics")
+            
+            -- Set the fake door's data
+            ent:SetPos(pos)
+            ent:SetAngles(ang)
+            ent:SetModel(model)
+            ent:SetSkin(skin)
+            ent:Spawn()
+            
+            -- Add some force to the door
+            timer.Simple(0.01, function() if (ent && push) then ent:GetPhysicsObject():SetVelocity(push) end end)   
+            
+            -- Reset the door after some time
+            timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
         end
-        
-        -- Get the angles and calculate the force
-        local norm = (pos - self.Owner:GetPos())
-        norm:Normalize()
-        local push = 2000 * norm
-        local ent = ents.Create("prop_physics")
-        
-        -- Set the fake door's data
-        ent:SetPos(pos)
-        ent:SetAngles(ang)
-        ent:SetModel(model)
-        ent:SetSkin(skin)
-        ent:Spawn()
-        
-        -- Add some force to the door
-        timer.Simple(0.01, function() if (ent && push) then ent:GetPhysicsObject():SetVelocity(push) end end)   
-        
-        -- Reset the door after some time
-        timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
     end
 end
 
@@ -1072,6 +1092,9 @@ function ThirdPersonEffects(len, ply, wep)
                 return
             end
         end
+        
+        -- Ensure the weapon is valid before we go any further
+        if (!IsValid(wep)) then return end
         
         -- Ensure the attachment exists and we're in third person
         local attach = wep:GetAttachment(1)
@@ -1507,6 +1530,12 @@ local holdanims = {
     ["reload"] = {"pistol", "revolver", "smg", "ar2", "shotgun", "knife"},
     ["holster"] = {"normal", "normal", "normal", "passive", "passive", "normal",},
 }
+local holdanimsnpc = {
+    ["idle"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
+    ["aim"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
+    ["reload"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol"},
+    ["holster"] = {"pistol", "pistol", "smg", "ar2", "shotgun", "pistol",},
+}
 local holdtypes = {
     ["pistol"] = 1,
     ["revolver"] = 2,
@@ -1516,10 +1545,18 @@ local holdtypes = {
     ["knife"] = 6,
 }
 function SWEP:HandleHoldtypes(anim)
-    if (CLIENT && !IsFirstTimePredicted()) then return end
-    if (!IsValidVariable(self.HoldType)) then return end
-    self:SetHoldType(holdanims[anim][holdtypes[self.HoldType]] or "normal")
-    self:SetWeaponHoldType(self:GetHoldType())
+    if (self.Owner:IsPlayer()) then
+        if (CLIENT && !IsFirstTimePredicted()) then return end
+        if (!IsValidVariable(self.HoldType)) then return end
+        self:SetHoldType(holdanims[anim][holdtypes[self.HoldType]] or "normal")
+        self:SetWeaponHoldType(self:GetHoldType())
+    else
+        if (self.Owner:GetClass() == "npc_metropolice" && self.HoldType == "rifle") then
+            self.HoldType = "smg"
+        end
+        self:SetHoldType(holdanimsnpc[anim][holdtypes[self.HoldType]] or "smg")
+        self:SetWeaponHoldType(self:GetHoldType())
+    end
 end
 
 
@@ -1881,7 +1918,7 @@ end
 
 function SWEP:FireAnimationEvent(pos, ang, event)
     -- Don't draw thirdperson effects in multiplayer (because they don't work)
-    if (self.Owner:ShouldDrawLocalPlayer() && !game.SinglePlayer() && (event == 21 || event == 22 || event == 6001)) then
+    if (self.Owner:IsPlayer() && self.Owner:ShouldDrawLocalPlayer() && !game.SinglePlayer() && (event == 21 || event == 22 || event == 6001)) then
         return true
     end
     
@@ -2165,8 +2202,8 @@ if (CLIENT) then
         if (self.LastEyePosition == nil) then
             self.LastEyePosition = Angle(0, 0, 0)
         end
-        if (self.EyePosition == nil) then
-            self.EyePosition = Angle(0, 0, 0)
+        if (self.BuuBase_EyePosition == nil) then
+            self.BuuBase_EyePosition = Angle(0, 0, 0)
         end
         if (vmfov == nil) then
             vmfov = self.ViewModelFOV
@@ -2408,18 +2445,18 @@ if (CLIENT) then
         
         -- Handle viewmodel swaying
         if (GetConVar("cl_buu_customsway"):GetBool()) then
-            self.LastEyePosition = self.EyePosition
+            self.LastEyePosition = self.BuuBase_EyePosition
             
             Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
             
-            self.EyePosition = Current_Aim - ply:EyeAngles()
-            self.EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
+            self.BuuBase_EyePosition = Current_Aim - ply:EyeAngles()
+            self.BuuBase_EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
             
-            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.EyePosition.p/self.BuuSwayScale, -4, 4))
-            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.EyePosition.y/self.BuuSwayScale, -4, 4))
+            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.BuuBase_EyePosition.p/self.BuuSwayScale, -4, 4))
+            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.BuuBase_EyePosition.y/self.BuuSwayScale, -4, 4))
 
-            pos = pos + math.Clamp((-1.5*self.EyePosition.p/self.BuuSwayScale), -1.5, 1.5) * ang:Up()
-            pos = pos + math.Clamp((-1.5*self.EyePosition.y/self.BuuSwayScale), -1.5, 1.5) * ang:Right()
+            pos = pos + math.Clamp((-1.5*self.BuuBase_EyePosition.p/self.BuuSwayScale), -1.5, 1.5) * ang:Up()
+            pos = pos + math.Clamp((-1.5*self.BuuBase_EyePosition.y/self.BuuSwayScale), -1.5, 1.5) * ang:Right()
         end
         
         -- Return the final calculated position and angle
