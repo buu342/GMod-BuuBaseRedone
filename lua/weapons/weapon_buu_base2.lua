@@ -951,9 +951,13 @@ function SWEP:ShootCode(mode)
             
             -- Helper function for enabling the door
             local function ResetDoor(door, fakedoor)
-                door:SetNotSolid(false)
-                door:SetNoDraw(false)
-                fakedoor:Remove()
+                if (IsValid(door)) then
+                    door:SetNotSolid(false)
+                    door:SetNoDraw(false)
+                end
+                if (IsValid(fakedoor)) then
+                    fakedoor:Remove()
+                end
             end
             
             -- Get the angles and calculate the force
@@ -1813,7 +1817,7 @@ net.Receive("BuuBase_DropMag", MagazineDrop)
 -----------------------------*/
 
 function SWEP:Cleanup(holsterto)
-    if (self.Owner == nil) then return end
+    if (self.Owner == nil || !IsValid(self.Owner)) then return end
     
     if (CLIENT && IsValid(self.Owner) && self.Owner:GetViewModel() != nil && IsValid(self.Owner:GetViewModel())) then
         for i=0, 9 do
