@@ -2181,8 +2181,7 @@ end
 
 if (CLIENT) then
     // KM_CM's Note: SWEP:ManipulateViewModel should probably be changed to SWEP:CalcViewModelView,
-    // and the GM:CalcView hook replaced with SWEP:CalcView. The moving bobbing constants should
-    // probably be replaced with GetRunSpeed() and GetWalkSpeed(), and crouch bobbing code
+    // and the GM:CalcView hook replaced with SWEP:CalcView. Crouch bobbing code
     // should be probably borrowed from my addon ( https://github.com/KM-CM/GarrysMod-KM_CMs_Addon )
     // P.S. Just realized. Intercept IN_ZOOM to ironsight and make the secondary attack do something?
     // Because that's what I did with my addon, making a "standard" of having MOUSE2 doing +zoom and MOUSE3 doing +attack2
@@ -2194,6 +2193,12 @@ if (CLIENT) then
         @Param  The angle of the viewmodel
         @Return The final position and angle
     -----------------------------*/
+
+    // BUU!!! AT LEAST BE SANE ENOUGH TO CACHE THE FUNCTIONS!!!
+    local IsValid = IsValid
+    local Vector = Vector
+    local LerpVector = LerpVector
+    local Lerp = Lerp
 
     -- Initialize globals
     local FinalVector = Vector(0, 0, 0)
@@ -2432,19 +2437,21 @@ if (CLIENT) then
             
                 -- Sprinting bobbing
                 local BreatheTime = RealTime() * 18
-                if (self.PistolSprint) then
-                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*walkspeed/400, -math.cos(BreatheTime)*walkspeed/400, 0)
-                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*walkspeed/400, 0, 0)
+                local f = walkspeed / ply:GetRunSpeed()
+                if self.PistolSprint then
+                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*f, -math.cos(BreatheTime)*f, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*f, 0, 0)
                 else
-                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400, 0,math.cos(BreatheTime)*walkspeed/400)
-                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400, 0)
+                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*f, 0,math.cos(BreatheTime)*f)
+                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*f,((math.cos(BreatheTime/2)+1)*7.5)*f, 0)
                 end
-            elseif (walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
+            elseif (walkspeed > 16 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
             
                 -- Walking bobbing
                 local BreatheTime = RealTime() * 16
+                local f = walkspeed / ply:GetWalkSpeed()
                 if (self:GetBuu_Ironsights()) then
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime/2)/2)*walkspeed/200, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*f, (math.cos(BreatheTime/2)/2)*f, 0)
                 else
                     local roll = 0
                     local yaw = 0
@@ -2453,8 +2460,8 @@ if (CLIENT) then
                     elseif (self.Owner:KeyDown(IN_MOVELEFT)) then
                         yaw = 4*(walkspeed/200)
                     end
-                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5, 0, 0)
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime), -0.3, 0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
+                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*f+yaw/5, 0, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime), -0.3, 0.3)*1.2)*f,(-math.cos(BreatheTime/2)*1.2)*f+yaw,roll)
                 end
             elseif !self:GetBuu_Ironsights() then
             
