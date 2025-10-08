@@ -912,25 +912,20 @@ function SWEP:ShootCode(mode)
     end
 
     -- Create our bullet structure and fire it
-    local bullet      = {}
-    bullet.Num        = numbul
-    bullet.Src        = self.Owner:GetShootPos()
-    bullet.Dir        = (self.Owner:EyeAngles() + viewp):Forward()
-    bullet.Spread     = Vector(cone, cone, 0)
-    bullet.Tracer     = 1
+    local bullet = {}
+    bullet.Num = numbul
+    bullet.Src = self.Owner:GetShootPos()
+    bullet.Dir = (self.Owner:EyeAngles() + viewp):Forward()
+    bullet.Spread = Vector(cone, cone, 0)
+    bullet.Tracer = 1
     bullet.TracerName = mode.Tracer or "nil"
-    bullet.Force      = 0.5*dmg
-    bullet.Damage     = dmg
-    bullet.Callback   = function(attacker, tr, dmginfo) self:BulletCallback(attacker, tr, dmginfo) end
-    self.Owner:FireBullets(bullet)
-
-    -- Door destruction
-    if (self.Owner:IsPlayer()) then
-        local tr = self.Owner:GetEyeTrace()
-        if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
-        if (tr.HitPos:Distance(self.Owner:GetShootPos()) > 250) then return end
-        if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
-
+    bullet.Force = 0.5*dmg
+    bullet.Damage = dmg
+	local b = !self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()
+    bullet.Callback = function(attacker, tr, dmginfo)
+        if b then return end
+		self:BulletCallback(attacker, tr, dmginfo)
+        if tr.Entity:GetClass() == "prop_door_rotating" && tr.HitPos:DistToSqr( tr.StartPos ) <= 65536/*256*/ then
             -- Force the door to open
             tr.Entity:Fire("open", "", 0.001)
             tr.Entity:Fire("unlock", "", 0.001)
@@ -975,7 +970,8 @@ function SWEP:ShootCode(mode)
             -- Reset the door after some time
             timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
         end
-    end
+	end
+    self.Owner:FireBullets(bullet)
 end
 
 
@@ -1588,13 +1584,14 @@ function SWEP:HandleBarrelSmoke()
         
         -- Calculate the smoke value based on the firing delay
         local mode = self:GetFireModeTable()
+		local f = ( mode.Delay > 0 && mode.Delay || .1 )
         if (self:GetBuu_FireTime()+0.2 > CurTime()) then
-            self.Smoke = self.Smoke + mode.Delay*2
+            self.Smoke = self.Smoke + f * 2
         end
-        self.Smoke = math.max(self.Smoke-mode.Delay/10, 0)
+        self.Smoke = math.max(self.Smoke-f/10, 0)
         
         -- If we hit a arbitrary firing amount, and the player stopped firing, emit the smoke effect
-        if (self.Smoke >= mode.Delay*100 && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
+        if (self.Smoke >= f && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
             self.Smoke = 0
             self.NextSmoke = CurTime()+3
             
