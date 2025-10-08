@@ -92,4 +92,4 @@ And love to all the following people, for being awesome, for teaching me things,
 * xDShot
 * datae
 * Spartains
-* KM_CM ( I have credited myself in the pull request just in case, https://github.com/KM-CM )
+* KM_CM
