@@ -921,10 +921,10 @@ function SWEP:ShootCode(mode)
     bullet.TracerName = mode.Tracer or "nil"
     bullet.Force = 0.5*dmg
     bullet.Damage = dmg
-	local b = !self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()
+    local b = !self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()
     bullet.Callback = function(attacker, tr, dmginfo)
         if b then return end
-		self:BulletCallback(attacker, tr, dmginfo)
+        self:BulletCallback(attacker, tr, dmginfo)
         if tr.Entity:GetClass() == "prop_door_rotating" && tr.HitPos:DistToSqr( tr.StartPos ) <= 65536/*256*/ then
             -- Force the door to open
             tr.Entity:Fire("open", "", 0.001)
@@ -970,7 +970,7 @@ function SWEP:ShootCode(mode)
             -- Reset the door after some time
             timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
         end
-	end
+    end
     self.Owner:FireBullets(bullet)
 end
 
@@ -1584,7 +1584,7 @@ function SWEP:HandleBarrelSmoke()
         
         -- Calculate the smoke value based on the firing delay
         local mode = self:GetFireModeTable()
-		local f = ( mode.Delay > 0 && mode.Delay || .1 )
+        local f = ( mode.Delay > 0 && mode.Delay || .1 )
         if (self:GetBuu_FireTime()+0.2 > CurTime()) then
             self.Smoke = self.Smoke + f * 2
         end
