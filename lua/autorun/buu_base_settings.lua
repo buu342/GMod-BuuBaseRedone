@@ -13,75 +13,75 @@ if CLIENT then
             }
             
             BuuBaseSettings.Options["#Default"] = {    
-                cl_buu_crosshairhealth  = "2",
-                cl_buu_crosshairstyle   = "4",
-                cl_buu_crosshairred     = "255",
-                cl_buu_crosshairgreen   = "255",
-                cl_buu_crosshairblue    = "255",
-                cl_buu_crosshairalpha   = "255",
+                cl_buu_crosshairhealth = "2",
+                cl_buu_crosshairstyle =    "4",
+                cl_buu_crosshairred = "255",
+                cl_buu_crosshairgreen =    "255",
+                cl_buu_crosshairblue =    "255",
+                cl_buu_crosshairalpha =    "255",
                 cl_buu_ironsightrolling = "1",
-                cl_buu_barrelsmoke      = "1",
-                cl_buu_customjump       = "1",
-                cl_buu_custombob        = "1",
-                cl_buu_customsway       = "1",
-                cl_buu_magdrop          = "1",
-                cl_buu_magdroplifetime  = "10",
-                cl_buu_ironsensitivity  = "0.7",
+                cl_buu_barrelsmoke = "1",
+                cl_buu_customjump =    "1",
+                cl_buu_custombob =    "1",
+                cl_buu_customsway =    "1",
+                cl_buu_magdrop = "1",
+                cl_buu_magdroplifetime = "10",
+                cl_buu_ironsensitivity = "0.7",
                 cl_buu_scopesensitivity = "0.3",
-                cl_buu_lowammowarn      = "1",
-                cl_buu_slidetilt        = "1",
+                cl_buu_lowammowarn = "1",
+                cl_buu_slidetilt = "1",
                 cl_buu_thirdpersonlaser = "1",
                 cl_buu_thirdpersonlight = "1"
             }
 
-            panel:AddControl("ComboBox", BuuBaseSettings)
+            panel:AddControl( "ComboBox", BuuBaseSettings )
             
-            panel:AddControl("Slider", {
-                Label   = "Crosshair Health",
+            panel:AddControl( "Slider", {
+                Label = "Crosshair Health",
                 Command = "cl_buu_crosshairhealth",
-                Type    = "Integer",
-                Min     = "0",
-                Max     = "2",
+                Type = "Integer",
+                Min = "0",
+                Max = "2",
             } )
             
             panel:AddControl("Slider", {
-                Label   = "Crosshair Style",
+                Label = "Crosshair Style",
                 Command = "cl_buu_crosshairstyle",
-                Type    = "Integer",
-                Min     = "0",
-                Max     = "4",
+                Type = "Integer",
+                Min = "0",
+                Max = "4",
             })
             
             panel:AddControl("Slider", {
-                Label   = "Crosshair Red",
-                Command = "cl_buu_crosshairred",
-                Type    = "Integer",
-                Min     = "0",
-                Max     = "255",
+                Label     = "Crosshair Red",
+                Command     = "cl_buu_crosshairred",
+                Type         = "Integer",
+                Min         = "0",
+                Max         = "255",
             })
             
             panel:AddControl("Slider", {
-                Label   = "Crosshair Green",
-                Command = "cl_buu_crosshairgreen",
-                Type    = "Integer",
-                Min     = "0",
-                Max     = "255",
+                Label     = "Crosshair Green",
+                Command     = "cl_buu_crosshairgreen",
+                Type         = "Integer",
+                Min         = "0",
+                Max         = "255",
             })
             
             panel:AddControl("Slider", {
-                Label    = "Crosshair Blue",
-                Command  = "cl_buu_crosshairblue",
-                Type     = "Integer",
-                Min      = "0",
-                Max      = "255",
+                Label     = "Crosshair Blue",
+                Command     = "cl_buu_crosshairblue",
+                Type         = "Integer",
+                Min         = "0",
+                Max         = "255",
             })
             
             panel:AddControl("Slider", {
-                Label    = "Crosshair Alpha",
-                Command  = "cl_buu_crosshairalpha",
-                Type     = "Integer",
-                Min      = "0",
-                Max      = "255",
+                Label     = "Crosshair Alpha",
+                Command     = "cl_buu_crosshairalpha",
+                Type         = "Integer",
+                Min         = "0",
+                Max         = "255",
             })
             
             panel:AddControl("Label", {Text = ""})
@@ -127,29 +127,29 @@ if CLIENT then
             })
             
             panel:AddControl("Slider", {
-                Label   = "Dropped mags lifetime",
-                Command = "cl_buu_magdroplifetime",
-                Type    = "Integer",
-                Min     = "1",
-                Max     = "10000",
+                Label     = "Dropped mags lifetime",
+                Command     = "cl_buu_magdroplifetime",
+                Type         = "Integer",
+                Min         = "1",
+                Max         = "10000",
             })
             
             panel:AddControl("Label", {Text = ""})
             
             panel:AddControl("Slider", {
-                Label   = "Ironsight sensitivity",
-                Command = "cl_buu_ironsensitivity",
-                Type    = "Float",
-                Min     = "0",
-                Max     = "1",
+                Label     = "Ironsight sensitivity",
+                Command     = "cl_buu_ironsensitivity",
+                Type         = "Float",
+                Min         = "0",
+                Max         = "1",
             })
             
             panel:AddControl("Slider", {
-                Label   = "Scope Sensitivity",
-                Command = "cl_buu_scopesensitivity",
-                Type    = "Float",
-                Min     = "0",
-                Max     = "1",
+                Label     = "Scope Sensitivity",
+                Command     = "cl_buu_scopesensitivity",
+                Type         = "Float",
+                Min         = "0",
+                Max         = "1",
             })
             
             panel:AddControl("Label", {Text = ""})
@@ -172,26 +172,26 @@ if CLIENT then
         spawnmenu.AddToolMenuOption("Options", "Buu Base Settings", "BuuBaseSettings_Server", "Server", "", "", function(panel)
 
             local BuuBaseSettings = {
-                Options    = {}, 
-                CVars      = {}, 
-                Label      = "#Presets", 
+                Options = {}, 
+                CVars = {}, 
+                Label = "#Presets", 
                 MenuButton = "1", 
-                Folder     = "Buu Base Settings"
+                Folder = "Buu Base Settings"
             }
             
             BuuBaseSettings.Options["#Default"] = {    
-                sv_buu_ironsights        = "1",
-                sv_buu_crosshair         = "1",
-                sv_buu_sprinting         = "1",
-                sv_buu_nearwall          = "1",
-                sv_buu_ladder            = "1",
-                sv_buu_ironsightsway     = "1",
+                sv_buu_ironsights =    "1",
+                sv_buu_crosshair = "1",
+                sv_buu_sprinting = "1",
+                sv_buu_nearwall = "1",
+                sv_buu_ladder = "1",
+                sv_buu_ironsightsway = "1",
                 sv_buu_shotgunwreckdoors = "1",
-                sv_buu_sniperbreath      = "1",
-                sv_buu_canslide          = "1",
-                sv_buu_slidedamage       = "1",
-                sv_buu_slideshoot        = "1",
-                sv_buu_customflashlight  = "1",
+                sv_buu_sniperbreath = "1",
+                sv_buu_canslide = "1",
+                sv_buu_slidedamage = "1",
+                sv_buu_slideshoot = "1",
+                sv_buu_customflashlight = "1",
                 sv_buu_bulletpenetration = "1",
             }
 
@@ -276,7 +276,7 @@ end
 
 
 /*===============================================================
-                           Clientside
+                            Clientside
 ===============================================================*/
 
 if !ConVarExists("cl_buu_crosshairhealth") then
@@ -356,7 +356,7 @@ if !ConVarExists("cl_buu_magdroplifetime") then
 end
 
 /*===============================================================
-                           Serverside
+                            Serverside
 ===============================================================*/
 
 if !ConVarExists("sv_buu_ironsights") then

@@ -21,7 +21,7 @@ function EFFECT:Init(data)
     self.Forward = data:GetNormal()
     self.Angle = self.Forward:Angle()
     self.Right = self.Angle:Right()
-
+    
     -- Ensure the weapon exists
     if (!IsValid(self.WeaponEnt) || self.WeaponEnt:GetOwner() == nil) then return end
     
@@ -38,7 +38,7 @@ function EFFECT:Init(data)
         particle:SetEndSize(7*i)
         particle:SetRoll(math.Rand(180, 480))
         particle:SetRollDelta(math.Rand(-1, 1))
-        particle:SetColor(255, 255, 255)
+        particle:SetColor(255, 255, 255)    
         particle:SetAirResistance(160)
     end
 
