@@ -86,7 +86,7 @@ SWEP.MuzzleEffectS    = "buu_muzzle_silenced"       -- Silenced muzzleflash effe
 SWEP.ThirdPersonShell = "RifleShellEject"                          -- Third person bullet shell ejection effect
 SWEP.MuzzleLight      = Color(255, 105, 0)          -- Muzzle light. -1 to not use.
 
-SWEP.CrosshairType   = 1  -- None (0), Normal (1), Sniper (2), Shotgun (3)
+SWEP.CrosshairType   = 1  // 0 None, 1 Normal, 2 Pistol, 3 Shotgun
 SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto generate the gap based on recoil+cone
 SWEP.CrosshairMove   = 50 -- The movement gap multiplier to use for the crosshair.
 SWEP.CrosshairRecoil = 5  -- The recoil gap multiplier to use for the crosshair.
@@ -2940,7 +2940,7 @@ if (CLIENT) then
     function SWEP:DrawHUD()
     
         -- Draw the sniper scope when using it, the crosshair if not
-        if (self:IsScoped()) then
+        if self:IsScoped() then
         
             -- Draw extra stuff first
             self:PreDrawScope()
@@ -2960,7 +2960,7 @@ if (CLIENT) then
             -- Draw extra stuff after
             self:PostDrawScope()
         else
-            // If developing, always draw the normal crosshair, unless a sniper. Used for finding ironsighted viewmodel positions
+            // If developing, always draw the normal crosshair (unless a sniper). Used for finding ironsighted viewmodel positions
             if GetConVar( "developer" ):GetBool() then self.DrawCrosshair = true return end
             if (GetConVar("sv_buu_crosshair"):GetInt() == 1 && !self:GetBuu_Ironsights() && !self:GetBuu_NearWall() && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_Reloading()) then
                 self.DrawCrosshair = false
@@ -2975,27 +2975,13 @@ if (CLIENT) then
                 else
                     local x, y
                     local r, g, b
-                    local scale = 1
-                    local movementgap = math.Clamp(LocalPlayer():GetVelocity():Length()/300, 0, 1.5)
+                    local f = mode.Cone * ScrW() * ( 90 / LocalPlayer():GetFOV() ) * .5
                     
-                    -- Calculate crosshair scale and gap
-                    if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 2) then
-                        scale = 16
-                    else
-                        if (lastfirehud != self:GetBuu_FireTime()) then
-                            togap = togap + 10+mode.Recoil*self.CrosshairRecoil
-                            lastfirehud = self:GetBuu_FireTime()
-                        end
-                        togap = Lerp(0.04, togap, 0)
+                    if (lastfirehud != self:GetBuu_FireTime()) then
+                        lastfirehud = self:GetBuu_FireTime()
                     end
-                    if (self.Sniper) then
-                        scale = scale/2
-                    end
-                    if (!IsValidVariable(self.CrosshairGap)) then
-                        finalgap = Lerp(1, finalgap, movementgap*self.CrosshairMove+scale*40+togap+mode.Recoil*15)
-                    else
-                        finalgap = Lerp(1, finalgap, (movementgap*self.CrosshairMove+scale*10+togap)*self.CrosshairGap)
-                    end
+                    togap = Lerp(0.04, togap, 0)
+                    finalgap = Lerp(1, finalgap, f + togap)
                     
                     local tr = util.GetPlayerTrace( self.Owner )
                     tr.mask = CONTENTS_SOLID + CONTENTS_MOVEABLE + CONTENTS_MONSTER + CONTENTS_WINDOW + CONTENTS_DEBRIS + CONTENTS_GRATE + CONTENTS_AUX
