@@ -91,6 +91,9 @@ SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto genera
 SWEP.CrosshairMove   = 50 -- The movement gap multiplier to use for the crosshair.
 SWEP.CrosshairRecoil = 5  -- The recoil gap multiplier to use for the crosshair.
 
+SWEP.LowAmmoClickSound = Sound "weapons/shotgun/shotgun_empty.wav" // Clicking sound when the current ammo is low ( -1 to not use )
+
+// NOTE: This is NOT the clicking on low ammo, this is a separate sound plays when Clip1() hits LowAmmoWarnClip!!!
 SWEP.LowAmmoWarnSound = -1 -- The sound to play to warn us when we're low ammo (-1 to not use) (Make sure to cache it with Sound(""))
 SWEP.LowAmmoWarnClip  = 10 -- How much ammo left in the clip for the above sound to play?
 
@@ -100,7 +103,8 @@ SWEP.CanNearWall      = true -- Allow being near a wall to holster the weapon?
 SWEP.CanLadder        = true -- Allow being on a ladder causing the weapon to holster?
 SWEP.CanSlide         = true -- Allow sliding
 SWEP.CanSmoke         = true -- Allow smoke trail if firing for very long
-SWEP.CanLowAmmoClick  = true -- Allow the clicking sound when running low on ammo?
+// See LowAmmoClickSound!
+// SWEP.CanLowAmmoClick  = true -- Allow the clicking sound when running low on ammo?
 SWEP.CustomFlashlight = true -- Use custom flashlight
 
 
@@ -211,7 +215,7 @@ SWEP.ScopeExitSound  = -1 -- The sound to play when we exit the scope (-1 to not
 /*===================== Shotgun Settings ===================*/
 
 SWEP.Shotgun             = false -- Shotgun reload
-SWEP.DestroyDoor         = false -- Does a shotgun break down doors?
+SWEP.DestroyDoor         = false -- Does this shotgun break down doors?
 SWEP.ShotgunReloadAmount = 1     -- How many shells to reload at once
 
 
@@ -297,69 +301,70 @@ end
     PrecacheStuff
     Precaches things to prevent lag spikes when
     using the weapon
+
+KM_CM's Note: I actually don't think this does anything. Calling Sound is already enough to precache it -
+it actually does nothing yet sounds don't work without calling it for some reason. Models work automatically.
 -----------------------------*/
 
-function SWEP:PrecacheStuff()
-
-    -- List of models
-    local modelist = {
-        self.ViewModel,
-        self.WorldModel,
-        self.MagModel
-    }
-    
-    -- Precache all the models in that list
-    for k, v in pairs(modelist) do
-        if (IsValidVariable(v) && v != "") then
-            util.PrecacheModel(v)
-        end
-    end
-    
-    -- List of sounds
-    local soundlist = {
-        self.Primary.Sound,
-        self.Secondary.Sound,
-        self.EmptySound,
-        self.LowAmmoWarnSound, 
-        self.ScopeEnterSound, 
-        self.ScopeExitSound, 
-    }
-    
-    -- Precache all the sounds in that list
-    for k, v in pairs(soundlist) do
-        if (IsValidVariable(v)) then
-            if (istable(v)) then
-                for _, snd in pairs(v) do
-                    util.PrecacheSound(snd)
-                end
-            else
-                util.PrecacheSound(v)
-            end
-        end
-    end
-    
-    -- Buu base specific sounds
-    util.PrecacheSound("weapons/shotgun/shotgun_empty.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol1.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol2.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol3.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol4.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol5.wav")
-    util.PrecacheSound("buu/base/ironsight_smg1.wav")
-    util.PrecacheSound("buu/base/ironsight_smg2.wav")
-    util.PrecacheSound("buu/base/ironsight_smg3.wav")
-    util.PrecacheSound("buu/base/ironsight_smg4.wav")
-    util.PrecacheSound("buu/base/ironsight_smg5.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle1.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle2.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle3.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle4.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle5.wav")
-    util.PrecacheSound("buu/base/breathe_in1.wav")
-    util.PrecacheSound("buu/base/breathe_in2.wav")
-    util.PrecacheSound("buu/base/breathe_out1.wav")
-    util.PrecacheSound("buu/base/breathe_out2.wav")
-end
+// local util_PrecacheModel = util.PrecacheModel
+// 
+// // From the Garry's Mod wiki
+// // NOTE: Soundcache is limited to 16384 unique sounds on the server.
+// // BUG: Broken on purpose because hitting the limit above causes the server to shutdown
+// // BUG: Ultimately does nothing on client, and only works with sound scripts, not direct paths.
+// // local util_PrecacheSound = util.PrecacheSound
+// 
+// function SWEP:PrecacheStuff()
+//     for k, v in pairs {
+//         self.ViewModel,
+//         self.WorldModel,
+//         self.MagModel
+//     } do
+//         if IsValidVariable( v ) && v != "" then
+//             util_PrecacheModel( v )
+//         end
+//     end
+// 
+//     // for k, v in pairs {
+//     //     self.Primary.Sound,
+//     //     self.Secondary.Sound,
+//     //     self.EmptySound,
+//     //     self.LowAmmoWarnSound, 
+//     //     self.ScopeEnterSound, 
+//     //     self.ScopeExitSound, 
+//     // } do
+//     //     if IsValidVariable( v ) then
+//     //         if istable( v ) then
+//     //             for _, s in pairs( v ) do
+//     //                 util_PrecacheSound( s )
+//     //             end
+//     //         else
+//     //             util_PrecacheSound( v )
+//     //         end
+//     //     end
+//     // end
+// 
+//     // util_PrecacheSound "weapons/shotgun/shotgun_empty.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol5.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg5.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle5.wav"
+//     // util_PrecacheSound "buu/base/breathe_in1.wav")
+//     // util_PrecacheSound "buu/base/breathe_in2.wav")
+//     // util_PrecacheSound "buu/base/breathe_out1.wav")
+//     // util_PrecacheSound "buu/base/breathe_out2.wav")
+// end
 
 
 /*-----------------------------
@@ -369,8 +374,8 @@ end
 
 function SWEP:Initialize()
 
-    -- Precache all the weapon related stuff
-    self:PrecacheStuff()
+    // -- Precache all the weapon related stuff
+    // self:PrecacheStuff()
     
     -- Initialize the predicted TimeToScope variable
     if (self.TimeToScope == nil) then
@@ -658,9 +663,8 @@ function SWEP:PrimaryAttack()
         self:EmitSound(sound, volume, pitch, 1, self.ShootChannel)
     end
     
-    -- Clicking sound on low ammo
-    if (self:Clip1() <= math.ceil(self:GetMaxClip1()/4) && GetConVar("cl_buu_lowammowarn"):GetBool() && self.CanLowAmmoClick) then
-        self:EmitSound("weapons/shotgun/shotgun_empty.wav", 50, 100, 1, CHAN_ITEM)
+    if (self:Clip1() <= math.ceil( self:GetMaxClip1() / 3 ) && GetConVar("cl_buu_lowammowarn"):GetBool() && IsValidVariable( self.LowAmmoClickSound )) then
+        self:EmitSound( self.LowAmmoClickSound, 50, 100, 1, CHAN_ITEM)
     end
     
     -- Handle viewpunch
@@ -2350,14 +2354,13 @@ if (CLIENT) then
         
         -- Custom jumping animation
         if (GetConVar("cl_buu_customjump"):GetBool()) then
-            if self.Owner:IsOnGround() then
-                // Do the curve every time we leave the ground. Helps when
-                // we walk off a ledge instead of jumping, also making
-                // the "If we jumped, start the animation" code lower redundant
-                self.JumpTime = 0
-            else
-                if self.JumpTime == 0 then self.JumpTime = RealTime() + .31 end
-                // If we're not on the ground, reset the landing animation time
+            if self.Owner:IsOnGround() then self.flAirTime = RealTime() + .01 self.JumpTime = 0 else
+                if CurTime() <= self.flAirTime then
+                    if self.JumpTime == 0 then
+                        self.JumpTime = ( self.Owner:KeyDown( IN_JUMP ) && self.Owner:KeyDownLast( IN_JUMP ) ) && ( RealTime() + .31 ) || 0
+                    end
+                end
+                self.bJump = nil
                 self.LandTime = RealTime() + .31
             end
             
@@ -2366,14 +2369,6 @@ if (CLIENT) then
                 self.LandTime = 0
                 self.JumpTime = 0
             end
-
-            //    -- If we jumped, start the animation
-            //    if (self.Owner:KeyDownLast(IN_JUMP)) then
-            //        if (self.JumpTime == 0) then
-            //            self.JumpTime = RealTime() + 0.31
-            //            self.LandTime = 0
-            //        end
-            //    end
         
             -- Helpful bezier function. Use this if you gotta: https://www.desmos.com/calculator/cahqdxeshd
             local function BezierY(f,a,b,c)

@@ -19,7 +19,7 @@ SWEP.ViewModelFOV = 54
 
 SWEP.Primary.ClipSize = 6
 SWEP.Primary.DefaultClip = 6
-SWEP.Primary.Delay = 0
+SWEP.Primary.Delay = .8
 SWEP.Primary.Automatic = false
 SWEP.Primary.Cone = 0 // No, I am not kidding. The HL2 357 also has zero inaccuracy
 SWEP.Primary.Recoil = 5
