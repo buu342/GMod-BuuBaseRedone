@@ -14,18 +14,14 @@ https://github.com/buu342/GMod-BuuBaseRedone
 
 AddCSLuaFile()
 
--- SWEP Info
-SWEP.Author       = "Buu342"
-SWEP.Name         = "Buu Base"
-SWEP.Contact      = "buu342@hotmail.com"
-SWEP.Purpose      = "To act as a base for my SWEPs"
+SWEP.Author = "Buu342"
+if CLIENT then language.Add( "weapon_buu_base2", "Buu342's Weapon Base" ) end
+SWEP.PrintName = "#weapon_buu_base2"
+SWEP.Contact = "buu342@hotmail.com"
+SWEP.Purpose = "To act as a base for my SWEPs"
 SWEP.Instructions = "Left click to shoot, right click to use sights."
-SWEP.Category     = "Buu342"
-
--- Spawning settings
-SWEP.Spawnable      = false
-SWEP.AdminSpawnable = false 
-SWEP.AdminOnly      = false
+SWEP.Spawnable = true
+SWEP.Slot = 2
 
 -- HUD and viewmodel settings
 SWEP.DrawAmmo        = true
@@ -90,11 +86,14 @@ SWEP.MuzzleEffectS    = "buu_muzzle_silenced"       -- Silenced muzzleflash effe
 SWEP.ThirdPersonShell = "RifleShellEject"                          -- Third person bullet shell ejection effect
 SWEP.MuzzleLight      = Color(255, 105, 0)          -- Muzzle light. -1 to not use.
 
-SWEP.CrosshairType   = 1  -- None (0), Normal (1), Sniper (2), Shotgun (3)
+SWEP.CrosshairType   = 1  // 0 None, 1 Normal, 2 Pistol, 3 Shotgun
 SWEP.CrosshairGap    = -1 -- The gap to use for the crosshair. -1 to auto generate the gap based on recoil+cone
 SWEP.CrosshairMove   = 50 -- The movement gap multiplier to use for the crosshair.
 SWEP.CrosshairRecoil = 5  -- The recoil gap multiplier to use for the crosshair.
 
+SWEP.LowAmmoClickSound = Sound "weapons/shotgun/shotgun_empty.wav" // Clicking sound when the current ammo is low ( -1 to not use )
+
+// NOTE: This is NOT the clicking on low ammo, this is a separate sound plays when Clip1() hits LowAmmoWarnClip!!!
 SWEP.LowAmmoWarnSound = -1 -- The sound to play to warn us when we're low ammo (-1 to not use) (Make sure to cache it with Sound(""))
 SWEP.LowAmmoWarnClip  = 10 -- How much ammo left in the clip for the above sound to play?
 
@@ -104,7 +103,8 @@ SWEP.CanNearWall      = true -- Allow being near a wall to holster the weapon?
 SWEP.CanLadder        = true -- Allow being on a ladder causing the weapon to holster?
 SWEP.CanSlide         = true -- Allow sliding
 SWEP.CanSmoke         = true -- Allow smoke trail if firing for very long
-SWEP.CanLowAmmoClick  = true -- Allow the clicking sound when running low on ammo?
+// See LowAmmoClickSound!
+// SWEP.CanLowAmmoClick  = true -- Allow the clicking sound when running low on ammo?
 SWEP.CustomFlashlight = true -- Use custom flashlight
 
 
@@ -215,7 +215,7 @@ SWEP.ScopeExitSound  = -1 -- The sound to play when we exit the scope (-1 to not
 /*===================== Shotgun Settings ===================*/
 
 SWEP.Shotgun             = false -- Shotgun reload
-SWEP.DestroyDoor         = false -- Does a shotgun break down doors?
+SWEP.DestroyDoor         = false -- Does this shotgun break down doors?
 SWEP.ShotgunReloadAmount = 1     -- How many shells to reload at once
 
 
@@ -301,69 +301,70 @@ end
     PrecacheStuff
     Precaches things to prevent lag spikes when
     using the weapon
+
+KM_CM's Note: I actually don't think this does anything. Calling Sound is already enough to precache it -
+it actually does nothing yet sounds don't work without calling it for some reason. Models work automatically.
 -----------------------------*/
 
-function SWEP:PrecacheStuff()
-
-    -- List of models
-    local modelist = {
-        self.ViewModel,
-        self.WorldModel,
-        self.MagModel
-    }
-    
-    -- Precache all the models in that list
-    for k, v in pairs(modelist) do
-        if (IsValidVariable(v) && v != "") then
-            util.PrecacheModel(v)
-        end
-    end
-    
-    -- List of sounds
-    local soundlist = {
-        self.Primary.Sound,
-        self.Secondary.Sound,
-        self.EmptySound,
-        self.LowAmmoWarnSound, 
-        self.ScopeEnterSound, 
-        self.ScopeExitSound, 
-    }
-    
-    -- Precache all the sounds in that list
-    for k, v in pairs(soundlist) do
-        if (IsValidVariable(v)) then
-            if (istable(v)) then
-                for _, snd in pairs(v) do
-                    util.PrecacheSound(snd)
-                end
-            else
-                util.PrecacheSound(v)
-            end
-        end
-    end
-    
-    -- Buu base specific sounds
-    util.PrecacheSound("weapons/shotgun/shotgun_empty.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol1.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol2.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol3.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol4.wav")
-    util.PrecacheSound("buu/base/ironsight_pistol5.wav")
-    util.PrecacheSound("buu/base/ironsight_smg1.wav")
-    util.PrecacheSound("buu/base/ironsight_smg2.wav")
-    util.PrecacheSound("buu/base/ironsight_smg3.wav")
-    util.PrecacheSound("buu/base/ironsight_smg4.wav")
-    util.PrecacheSound("buu/base/ironsight_smg5.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle1.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle2.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle3.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle4.wav")
-    util.PrecacheSound("buu/base/ironsight_rifle5.wav")
-    util.PrecacheSound("buu/base/breathe_in1.wav")
-    util.PrecacheSound("buu/base/breathe_in2.wav")
-    util.PrecacheSound("buu/base/breathe_out1.wav")
-    util.PrecacheSound("buu/base/breathe_out2.wav")
-end
+// local util_PrecacheModel = util.PrecacheModel
+// 
+// // From the Garry's Mod wiki
+// // NOTE: Soundcache is limited to 16384 unique sounds on the server.
+// // BUG: Broken on purpose because hitting the limit above causes the server to shutdown
+// // BUG: Ultimately does nothing on client, and only works with sound scripts, not direct paths.
+// // local util_PrecacheSound = util.PrecacheSound
+// 
+// function SWEP:PrecacheStuff()
+//     for k, v in pairs {
+//         self.ViewModel,
+//         self.WorldModel,
+//         self.MagModel
+//     } do
+//         if IsValidVariable( v ) && v != "" then
+//             util_PrecacheModel( v )
+//         end
+//     end
+// 
+//     // for k, v in pairs {
+//     //     self.Primary.Sound,
+//     //     self.Secondary.Sound,
+//     //     self.EmptySound,
+//     //     self.LowAmmoWarnSound, 
+//     //     self.ScopeEnterSound, 
+//     //     self.ScopeExitSound, 
+//     // } do
+//     //     if IsValidVariable( v ) then
+//     //         if istable( v ) then
+//     //             for _, s in pairs( v ) do
+//     //                 util_PrecacheSound( s )
+//     //             end
+//     //         else
+//     //             util_PrecacheSound( v )
+//     //         end
+//     //     end
+//     // end
+// 
+//     // util_PrecacheSound "weapons/shotgun/shotgun_empty.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_pistol5.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_smg5.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle1.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle2.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle3.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle4.wav"
+//     // util_PrecacheSound "buu/base/ironsight_rifle5.wav"
+//     // util_PrecacheSound "buu/base/breathe_in1.wav")
+//     // util_PrecacheSound "buu/base/breathe_in2.wav")
+//     // util_PrecacheSound "buu/base/breathe_out1.wav")
+//     // util_PrecacheSound "buu/base/breathe_out2.wav")
+// end
 
 
 /*-----------------------------
@@ -373,8 +374,8 @@ end
 
 function SWEP:Initialize()
 
-    -- Precache all the weapon related stuff
-    self:PrecacheStuff()
+    // -- Precache all the weapon related stuff
+    // self:PrecacheStuff()
     
     -- Initialize the predicted TimeToScope variable
     if (self.TimeToScope == nil) then
@@ -662,9 +663,8 @@ function SWEP:PrimaryAttack()
         self:EmitSound(sound, volume, pitch, 1, self.ShootChannel)
     end
     
-    -- Clicking sound on low ammo
-    if (self:Clip1() <= math.ceil(self:GetMaxClip1()/4) && GetConVar("cl_buu_lowammowarn"):GetBool() && self.CanLowAmmoClick) then
-        self:EmitSound("weapons/shotgun/shotgun_empty.wav", 50, 100, 1, CHAN_ITEM)
+    if (self:Clip1() <= math.ceil( self:GetMaxClip1() / 3 ) && GetConVar("cl_buu_lowammowarn"):GetBool() && IsValidVariable( self.LowAmmoClickSound )) then
+        self:EmitSound( self.LowAmmoClickSound, 50, 100, 1, CHAN_ITEM)
     end
     
     -- Handle viewpunch
@@ -916,25 +916,20 @@ function SWEP:ShootCode(mode)
     end
 
     -- Create our bullet structure and fire it
-    local bullet      = {}
-    bullet.Num        = numbul
-    bullet.Src        = self.Owner:GetShootPos()
-    bullet.Dir        = (self.Owner:EyeAngles() + viewp + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33):Forward()
-    bullet.Spread     = Vector(cone, cone, 0)
-    bullet.Tracer     = 1
+    local bullet = {}
+    bullet.Num = numbul
+    bullet.Src = self.Owner:GetShootPos()
+    bullet.Dir = (self.Owner:EyeAngles() + viewp):Forward()
+    bullet.Spread = Vector(cone, cone, 0)
+    bullet.Tracer = 1
     bullet.TracerName = mode.Tracer or "nil"
-    bullet.Force      = 0.5*dmg
-    bullet.Damage     = dmg
-    bullet.Callback   = function(attacker, tr, dmginfo) self:BulletCallback(attacker, tr, dmginfo) end
-    self.Owner:FireBullets(bullet)
-
-    -- Door destruction
-    if (self.Owner:IsPlayer()) then
-        local tr = self.Owner:GetEyeTrace()
-        if (!self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()) then return end
-        if (tr.HitPos:Distance(self.Owner:GetShootPos()) > 250) then return end
-        if (tr.Entity:GetClass() == "prop_door_rotating" and SERVER) then
-
+    bullet.Force = 0.5*dmg
+    bullet.Damage = dmg
+    local b = !self.DestroyDoor || !GetConVar("sv_buu_shotgunwreckdoors"):GetBool()
+    bullet.Callback = function(attacker, tr, dmginfo)
+        if b then return end
+        self:BulletCallback(attacker, tr, dmginfo)
+        if tr.Entity:GetClass() == "prop_door_rotating" && tr.HitPos:DistToSqr( tr.StartPos ) <= 65536/*256*/ then
             -- Force the door to open
             tr.Entity:Fire("open", "", 0.001)
             tr.Entity:Fire("unlock", "", 0.001)
@@ -980,6 +975,7 @@ function SWEP:ShootCode(mode)
             timer.Simple(25, function() if (IsValid(ent)) then ResetDoor(tr.Entity, ent, 10) end end)
         end
     end
+    self.Owner:FireBullets(bullet)
 end
 
 
@@ -1058,15 +1054,13 @@ function SWEP:ShootProjectile(mode)
             ent:Spawn()
             
             -- Enable physics and give it some force
-            local phys = ent:GetPhysicsObject()
-            if IsValid(phys)then 
-                local velocity = self.Owner:EyeAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33
-                if (self.Owner:IsPlayer()) then
-                   velocity = velocity + self.Owner:GetViewPunchAngles()
-                end
-                velocity = (velocity:Forward())*ent.Force
-                phys:ApplyForceCenter(velocity)
+            local velocity = self.Owner:EyeAngles() + Angle(math.Rand(-cone, cone), math.Rand(-cone, cone), 0)*33
+            if (self.Owner:IsPlayer()) then
+               velocity = velocity + self.Owner:GetViewPunchAngles()
             end
+            velocity = ( velocity:Forward() ) * ent.Force
+            local phys = ent:GetPhysicsObject()
+            if IsValid( phys ) then phys:ApplyForceCenter( velocity ) else ent:SetVelocity( velocity ) end
         end
     end
 end
@@ -1594,13 +1588,14 @@ function SWEP:HandleBarrelSmoke()
         
         -- Calculate the smoke value based on the firing delay
         local mode = self:GetFireModeTable()
+        local f = ( mode.Delay > 0 && mode.Delay || .1 )
         if (self:GetBuu_FireTime()+0.2 > CurTime()) then
-            self.Smoke = self.Smoke + mode.Delay*2
+            self.Smoke = self.Smoke + f * 2
         end
-        self.Smoke = math.max(self.Smoke-mode.Delay/10, 0)
+        self.Smoke = math.max(self.Smoke-f/10, 0)
         
         -- If we hit a arbitrary firing amount, and the player stopped firing, emit the smoke effect
-        if (self.Smoke >= mode.Delay*100 && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
+        if (self.Smoke >= f && self.NextSmoke < CurTime() && (!self.Owner:KeyDown(IN_ATTACK) || self:Clip1() == 0) && self:GetBuu_FireTime()+0.5 < CurTime()) then
             self.Smoke = 0
             self.NextSmoke = CurTime()+3
             
@@ -1936,7 +1931,7 @@ end
 
 function SWEP:FireAnimationEvent(pos, ang, event)
     -- Don't draw thirdperson effects in multiplayer (because they don't work)
-    if (self.Owner:IsPlayer() && self.Owner:ShouldDrawLocalPlayer() && !game.SinglePlayer() && (event == 21 || event == 22 || event == 6001)) then
+    if (self.Owner:IsPlayer() && Either( CLIENT, CLIENT && self.Owner:ShouldDrawLocalPlayer(), true ) && !game.SinglePlayer() && (event == 21 || event == 22 || event == 6001)) then
         return true
     end
     
@@ -2186,6 +2181,11 @@ end
 
 
 if (CLIENT) then
+    // KM_CM's Note: SWEP:ManipulateViewModel should probably be changed to SWEP:CalcViewModelView,
+    // and the GM:CalcView hook replaced with SWEP:CalcView. Crouch bobbing code
+    // should be probably borrowed from my addon ( https://github.com/KM-CM/GarrysMod-KM_CMs_Addon )
+    // P.S. Just realized. Intercept IN_ZOOM to ironsight and make the secondary attack do something?
+    // Because that's what I did with my addon, making a "standard" of having MOUSE2 doing +zoom and MOUSE3 doing +attack2
 
     /*-----------------------------
         ManipulateViewModel
@@ -2194,6 +2194,12 @@ if (CLIENT) then
         @Param  The angle of the viewmodel
         @Return The final position and angle
     -----------------------------*/
+
+    // BUU!!! AT LEAST BE SANE ENOUGH TO CACHE THE FUNCTIONS!!!
+    local IsValid = IsValid
+    local Vector = Vector
+    local LerpVector = LerpVector
+    local Lerp = Lerp
 
     -- Initialize globals
     local FinalVector = Vector(0, 0, 0)
@@ -2207,6 +2213,8 @@ if (CLIENT) then
     local maxroll = 30 -- How much to roll the gun when going into ironsights
     local vmfov = nil
     local vmfov_t = nil
+    SWEP.flIronSightSwayMultiplier = 1 // How much sway do we currently have?
+    SWEP.flIronSightSwayMultiplierTarget = 0 // How much sway do we have when ironsighting?
     function SWEP:ManipulateViewModel(pos, ang)
         if !IsValid(self.Owner) then return end
         
@@ -2237,17 +2245,18 @@ if (CLIENT) then
         
         -- Decide the animation speed based on what the player is currently doing
         local animspeed = 5
-        if (self.LandTime > RealTime() && !(self.Owner:KeyDown(IN_SPEED) && self.Owner:IsOnGround())) then
-            animspeed = 20
-        elseif (IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40)) then
-            animspeed = 10
-        elseif (self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then 
-            if !self:GetBuu_Ironsights() then
-                animspeed = 4
-            else
-                animspeed = 10
-            end
-        end
+        // Too sharp!
+        //    if (self.LandTime > RealTime() && !(self.Owner:KeyDown(IN_SPEED) && self.Owner:IsOnGround())) then
+        //        animspeed = 20
+        //    elseif (IsValid(self.Owner) && !self.Owner:KeyDown(IN_SPEED) && !(self.Owner:KeyDown(IN_DUCK) && walkspeed > 40)) then
+        //        animspeed = 10
+        //    elseif (self.Owner:KeyDown(IN_DUCK) && walkspeed > 40) then 
+        //        if !self:GetBuu_Ironsights() then
+        //            animspeed = 4
+        //        else
+        //            animspeed = 10
+        //        end
+        //    end
         
         -- Smoothly transition the vectors with the target values
         FinalVector = LerpVector(animspeed*FrameTime(), FinalVector, TargetVector) 
@@ -2268,7 +2277,8 @@ if (CLIENT) then
                     Sliding, and Sprinting
         --------------------------------------------*/
         
-        if (self:GetBuu_Ironsights() && !self:GetBuu_Reloading() && IsValidVariable(self.IronSightsPos)) then
+        local b = self:GetBuu_Ironsights() && !self:GetBuu_Reloading() && IsValidVariable(self.IronSightsPos)
+        if b then
             local targettime = 0
             
             -- If just fired, reset the shooting animation timer
@@ -2334,7 +2344,7 @@ if (CLIENT) then
             vmfov_t = vmfov
         end
         
-        -- Calculate the next ironsight tiime
+        -- Calculate the next ironsight time
         ironsighttime = math.Clamp(ironsighttime - 1, 0, maxroll)
         
         
@@ -2344,24 +2354,20 @@ if (CLIENT) then
         
         -- Custom jumping animation
         if (GetConVar("cl_buu_customjump"):GetBool()) then
-        
-            -- If we're not on the ground, reset the landing animation time
-            if (!self.Owner:IsOnGround()) then
-                self.LandTime = RealTime() + 0.31
+            if self.Owner:IsOnGround() then self.flAirTime = RealTime() + .01 self.JumpTime = 0 else
+                if CurTime() <= self.flAirTime then
+                    if self.JumpTime == 0 then
+                        self.JumpTime = ( self.Owner:KeyDown( IN_JUMP ) && self.Owner:KeyDownLast( IN_JUMP ) ) && ( RealTime() + .31 ) || 0
+                    end
+                end
+                self.bJump = nil
+                self.LandTime = RealTime() + .31
             end
             
             -- If we're noclipping, ignore everything
             if (self.Owner:GetMoveType() == MOVETYPE_NOCLIP || self:GetBuu_OnLadder() || self.Owner:WaterLevel() > 1) || (self.LandTime < RealTime() && self.LandTime != 0) then
                 self.LandTime = 0
                 self.JumpTime = 0
-            end
-
-            -- If we jumped, start the animation
-            if (self.Owner:KeyDownLast(IN_JUMP)) then
-                if (self.JumpTime == 0) then
-                    self.JumpTime = RealTime() + 0.31
-                    self.LandTime = 0
-                end
             end
         
             -- Helpful bezier function. Use this if you gotta: https://www.desmos.com/calculator/cahqdxeshd
@@ -2423,19 +2429,21 @@ if (CLIENT) then
             
                 -- Sprinting bobbing
                 local BreatheTime = RealTime() * 18
-                if (self.PistolSprint) then
-                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*walkspeed/400, -math.cos(BreatheTime)*walkspeed/400, 0)
-                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*walkspeed/400, 0, 0)
+                local f = walkspeed / ply:GetRunSpeed()
+                if self.PistolSprint then
+                    TargetVector = TargetVector - Vector(math.cos(BreatheTime/2)*f, -math.cos(BreatheTime)*f, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector(math.cos(BreatheTime/2)*f, 0, 0)
                 else
-                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*walkspeed/400, 0,math.cos(BreatheTime)*walkspeed/400)
-                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*walkspeed/400,((math.cos(BreatheTime/2)+1)*7.5)*walkspeed/400, 0)
+                    TargetVector = TargetVector - Vector(((math.cos(BreatheTime/2)+1)*1.25)*f, 0,math.cos(BreatheTime)*f)
+                    TargetVectorAngle = TargetVectorAngle - Vector(((math.cos(BreatheTime/2)+1)*-2.5)*f,((math.cos(BreatheTime/2)+1)*7.5)*f, 0)
                 end
-            elseif (walkspeed > 20 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
+            elseif (walkspeed > 16 && !self:GetBuu_NearWall() && !self.Owner:GetNWBool("Buu_Sliding")) then
             
                 -- Walking bobbing
                 local BreatheTime = RealTime() * 16
+                local f = walkspeed / ply:GetWalkSpeed()
                 if (self:GetBuu_Ironsights()) then
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*walkspeed/200, (math.cos(BreatheTime/2)/2)*walkspeed/200, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.cos(BreatheTime)/2)*f, (math.cos(BreatheTime/2)/2)*f, 0)
                 else
                     local roll = 0
                     local yaw = 0
@@ -2444,8 +2452,8 @@ if (CLIENT) then
                     elseif (self.Owner:KeyDown(IN_MOVELEFT)) then
                         yaw = 4*(walkspeed/200)
                     end
-                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*walkspeed/200+yaw/5, 0, 0)
-                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime), -0.3, 0.3)*1.2)*walkspeed/200,(-math.cos(BreatheTime/2)*1.2)*walkspeed/200+yaw,roll)
+                    TargetVector = TargetVector - Vector((-math.cos(BreatheTime/2)/5)*f+yaw/5, 0, 0)
+                    TargetVectorAngle = TargetVectorAngle - Vector((math.Clamp(math.cos(BreatheTime), -0.3, 0.3)*1.2)*f,(-math.cos(BreatheTime/2)*1.2)*f+yaw,roll)
                 end
             elseif !self:GetBuu_Ironsights() then
             
@@ -2462,19 +2470,30 @@ if (CLIENT) then
         --------------------------------------------*/
         
         -- Handle viewmodel swaying
-        if (GetConVar("cl_buu_customsway"):GetBool()) then
+        if GetConVar( "cl_buu_customsway" ):GetBool() then
+            Current_Aim = LerpAngle( 5 * FrameTime(), Current_Aim, ply:EyeAngles() )
             self.LastEyePosition = self.BuuBase_EyePosition
-            
-            Current_Aim = LerpAngle(5*FrameTime(), Current_Aim, ply:EyeAngles())
-            
             self.BuuBase_EyePosition = Current_Aim - ply:EyeAngles()
-            self.BuuBase_EyePosition.y = math.AngleDifference(Current_Aim.y, math.NormalizeAngle(ply:EyeAngles().y))   
-            
-            ang:RotateAroundAxis(ang:Right(), math.Clamp(4*self.BuuBase_EyePosition.p/self.BuuSwayScale, -4, 4))
-            ang:RotateAroundAxis(ang:Up(), math.Clamp(-4*self.BuuBase_EyePosition.y/self.BuuSwayScale, -4, 4))
-
-            pos = pos + math.Clamp((-1.5*self.BuuBase_EyePosition.p/self.BuuSwayScale), -1.5, 1.5) * ang:Up()
-            pos = pos + math.Clamp((-1.5*self.BuuBase_EyePosition.y/self.BuuSwayScale), -1.5, 1.5) * ang:Right()
+            self.BuuBase_EyePosition.y = math.AngleDifference( Current_Aim.y, math.NormalizeAngle( ply:EyeAngles().y ) )
+            // Sway less ( or don't ) when ironsighting
+            local flMultiplier = 1
+            if self.Owner:KeyDown( IN_ATTACK2 ) then
+                flMultiplier = math.Approach( self.flIronSightSwayMultiplier, self.flIronSightSwayMultiplierTarget, 10 * FrameTime() )
+                self.flIronSightSwayMultiplier = flMultiplier
+            else
+                flMultiplier = math.Approach( self.flIronSightSwayMultiplier, 1, 10 * FrameTime() )
+                self.flIronSightSwayMultiplier = flMultiplier
+            end
+            local flSwayAngle = 4 * self.BuuSwayScale * flMultiplier
+            local flSwayAngleNeg = -flSwayAngle
+            local eye = self.Owner:EyeAngles()
+            self.flLastEyeYaw = Lerp( 5 * FrameTime(), math.Clamp( ( self.flLastEyeYaw || 0 ) + math.AngleDifference( eye[ 2 ], ( self.flLastTrueEyeYaw || eye[ 2 ] ) ), flSwayAngleNeg, flSwayAngle ), 0 )
+            self.flLastTrueEyeYaw = eye[ 2 ]
+            ang:RotateAroundAxis( ang:Right(), math.Clamp( 4 * self.BuuBase_EyePosition.p / self.BuuSwayScale, -4, 4 ) * flMultiplier )
+            local f = -self.flLastEyeYaw
+            ang:RotateAroundAxis( ang:Up(), math.Clamp( -4 * f / self.BuuSwayScale, -4, 4 ) * flMultiplier )
+            pos = pos + math.Clamp( ( -1.5 * self.BuuBase_EyePosition.p / self.BuuSwayScale ), -1.5, 1.5 ) * flMultiplier * ang:Up()
+            pos = pos + math.Clamp( ( -1.5 * f / self.BuuSwayScale ), -1.5, 1.5 ) * flMultiplier * ang:Right()
         end
         
         -- Return the final calculated position and angle
@@ -2915,8 +2934,8 @@ if (CLIENT) then
     local lastfirehud = 0
     function SWEP:DrawHUD()
     
-        -- Draw the sniper scope in using it, or the crosshair if not
-        if (self:IsScoped()) then
+        -- Draw the sniper scope when using it, the crosshair if not
+        if self:IsScoped() then
         
             -- Draw extra stuff first
             self:PreDrawScope()
@@ -2926,7 +2945,7 @@ if (CLIENT) then
             surface.SetTexture(surface.GetTextureID(self.SniperTexture))
             surface.DrawTexturedRect(self.LensTable.x, self.LensTable.y, self.LensTable.w, self.LensTable.h)
 
-            -- Fill in everything else with a black as dark as my heart
+            -- Fill in everything else with black as dark as my heart
             surface.SetDrawColor(0, 0, 0, 255)
             surface.DrawRect(self.QuadTable.x1 - 2.5, self.QuadTable.y1 - 2.5, self.QuadTable.w1 + 5, self.QuadTable.h1 + 5)
             surface.DrawRect(self.QuadTable.x2 - 2.5, self.QuadTable.y2 - 2.5, self.QuadTable.w2 + 5, self.QuadTable.h2 + 5)
@@ -2935,109 +2954,107 @@ if (CLIENT) then
             
             -- Draw extra stuff after
             self:PostDrawScope()
-        elseif (GetConVar("sv_buu_crosshair"):GetInt() == 1 && !self:GetBuu_Ironsights() && !self:GetBuu_NearWall() && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_Reloading()) then
-            self.DrawCrosshair = false
-            if (self.CrosshairType == 0) then return end
-            
-            -- Pick the Crosshair
-            local mode = self:GetFireModeTable()
-            if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 1) then
-            
-                -- Enable HL2 Croshair
-                self.DrawCrosshair = true
-            else
-                local x, y
-                local r, g, b
-                local scale = 1
-                local movementgap = math.Clamp(LocalPlayer():GetVelocity():Length()/300, 0, 1.5)
+        else
+            // If developing, always draw the normal crosshair (unless a sniper). Used for finding ironsighted viewmodel positions
+            if GetConVar( "developer" ):GetBool() then self.DrawCrosshair = true return end
+            if (GetConVar("sv_buu_crosshair"):GetInt() == 1 && !self:GetBuu_Ironsights() && !self:GetBuu_NearWall() && !self:GetBuu_Sprinting() && !self:GetBuu_OnLadder() && !self:GetBuu_Reloading()) then
+                self.DrawCrosshair = false
+                if (self.CrosshairType == 0) then return end
                 
-                -- Calculate crosshair scale and gap
-                if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 2) then
-                    scale = 16
+                -- Pick the Crosshair
+                local mode = self:GetFireModeTable()
+                if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 1) then
+                
+                    -- Enable HL2 Croshair
+                    self.DrawCrosshair = true
                 else
+                    local x, y
+                    local r, g, b
+                    local f = mode.Cone * ScrW() * ( 90 / LocalPlayer():GetFOV() ) * .5
+                    
                     if (lastfirehud != self:GetBuu_FireTime()) then
-                        togap = togap + 10+mode.Recoil*self.CrosshairRecoil
                         lastfirehud = self:GetBuu_FireTime()
                     end
                     togap = Lerp(0.04, togap, 0)
-                end
-                if (self.Sniper) then
-                    scale = scale/2
-                end
-                if (!IsValidVariable(self.CrosshairGap)) then
-                    finalgap = Lerp(1, finalgap, movementgap*self.CrosshairMove+scale*40+togap+mode.Recoil*15)
-                else
-                    finalgap = Lerp(1, finalgap, (movementgap*self.CrosshairMove+scale*10+togap)*self.CrosshairGap)
-                end
-                
-                -- Set the crosshair X+Y where the player is looking in thirdperson, or the center of the screen in first person
-                if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
-                    local tr = util.GetPlayerTrace(self.Owner)
-                    tr.mask = (CONTENTS_SOLID+CONTENTS_MOVEABLE+CONTENTS_MONSTER+CONTENTS_WINDOW+CONTENTS_DEBRIS+CONTENTS_GRATE+CONTENTS_AUX)
-                    local trace = util.TraceLine(tr)
-                    local coords = trace.HitPos:ToScreen()
-                    x, y = coords.x, coords.y
-                else
-                    x, y = ScrW()/2, ScrH()/2
-                end
-                
-                -- Set the crosshair color
-                if (GetConVar("cl_buu_crosshairhealth"):GetInt() == 0) then
-                    r = GetConVar("cl_buu_crosshairred"):GetInt()
-                    g = GetConVar("cl_buu_crosshairgreen"):GetInt()
-                    b = GetConVar("cl_buu_crosshairblue"):GetInt()
-                else
-                    local hp = LocalPlayer():Health()
-                    local maxhp = LocalPlayer():GetMaxHealth()
-                    r = math.Clamp(255*2-(hp*2/maxhp)*255, 0, 255)
-                    g = math.Clamp((hp*2/maxhp)*255, 0, 255)
-                    b = 0
-                end
-                surface.SetDrawColor(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt())
-                
-                if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 2) then
-                
-                    -- Draw ZDoom crosshair
-                    surface.SetTexture(surface.GetTextureID("scope/xhair_zdoom"))
-                    surface.DrawTexturedRect(x-scale/2,y-scale/2,scale,scale)
-                elseif (GetConVar("cl_buu_crosshairstyle"):GetInt() == 3) then
-                
-                    -- CSS Crosshair
-                    local length = math.max(20 + finalgap, 4)
-                    surface.DrawLine(x - length, y, x - finalgap, y) -- Left line
-                    surface.DrawLine(x + length, y, x + finalgap, y) -- Right line
-                    if (self.CrosshairType != 2) then
-                        surface.DrawLine(x-1, y - length, x-1, y - finalgap) -- Top line
-                    end
-                    surface.DrawLine(x-1, y + length, x-1, y + finalgap) -- Bottom line
-                elseif (GetConVar("cl_buu_crosshairstyle"):GetInt() == 4) then
-                
-                    -- Far Cry 3 Crosshair
-                    if (self.CrosshairType < 3) then
+                    finalgap = Lerp(1, finalgap, f + togap)
                     
-                        -- 4 line crosshair
-                        surface.SetTexture(surface.GetTextureID("scope/xhair_fc3"))
-                        surface.DrawTexturedRectRotated(x,y+finalgap+5, 4, 16, 0)
-                        surface.DrawTexturedRectRotated(x+finalgap+5,y, 4, 16, 90)
-                        if (self.CrosshairType != 2) then
-                            surface.DrawTexturedRectRotated(x,y-finalgap-5, 4, 16, 180)
-                        end
-                        surface.DrawTexturedRectRotated(x-finalgap-5,y, 4, 16, 270)
+                    local tr = util.GetPlayerTrace( self.Owner )
+                    tr.mask = CONTENTS_SOLID + CONTENTS_MOVEABLE + CONTENTS_MONSTER + CONTENTS_WINDOW + CONTENTS_DEBRIS + CONTENTS_GRATE + CONTENTS_AUX
+                    tr = util.TraceLine( tr )
+                    -- Set the crosshair X+Y where the player is looking in thirdperson, or the center of the screen in first person
+                    if (self.Owner == LocalPlayer() && self.Owner:ShouldDrawLocalPlayer()) then
+                        local coords = tr.HitPos:ToScreen()
+                        x, y = coords.x, coords.y
                     else
-                        
-                        -- Circular crosshair
-                        local ga = mode.Cone
-                        if (IsValidVariable(self.CrosshairGap)) then
-                            ga = self.CrosshairGap
+                        x, y = ScrW() * .5, ScrH() * .5
+                    end
+                    
+                    local c = GetConVar( "cl_buu_crosshairhealth" ):GetInt()
+                    -- Set the crosshair color
+                    if c == 0 || c != 1 && !IsValid( tr.Entity ) then
+                        r = GetConVar( "cl_buu_crosshairred" ):GetInt()
+                        g = GetConVar( "cl_buu_crosshairgreen" ):GetInt()
+                        b = GetConVar( "cl_buu_crosshairblue" ):GetInt()
+                    else
+                        local p = c == 1 && LocalPlayer() || tr.Entity
+                        local hp = p:Health()
+                        local maxhp = p:GetMaxHealth()
+                        if hp <= 0 || maxhp <= 0 then
+                            r = GetConVar( "cl_buu_crosshairred" ):GetInt()
+                            g = GetConVar( "cl_buu_crosshairgreen" ):GetInt()
+                            b = GetConVar( "cl_buu_crosshairblue" ):GetInt()
+                        else
+                            r = math.Clamp(255*2-(hp*2/maxhp)*255, 0, 255)
+                            g = math.Clamp((hp*2/maxhp)*255, 0, 255)
+                            b = 0
                         end
-                        surface.DrawCircle(x, y, ga*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, ga*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
-                        surface.DrawCircle(x, y, ga*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                    end
+                    surface.SetDrawColor(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt())
+                    
+                    if (GetConVar("cl_buu_crosshairstyle"):GetInt() == 2) then
+                    
+                        -- Draw ZDoom crosshair
+                        surface.SetTexture(surface.GetTextureID("scope/xhair_zdoom"))
+                        surface.DrawTexturedRect(x-scale/2,y-scale/2,scale,scale)
+                    elseif (GetConVar("cl_buu_crosshairstyle"):GetInt() == 3) then
+                    
+                        -- CSS Crosshair
+                        local length = math.max(20 + finalgap, 4)
+                        surface.DrawLine(x - length, y, x - finalgap, y) -- Left line
+                        surface.DrawLine(x + length, y, x + finalgap, y) -- Right line
+                        if (self.CrosshairType != 2) then
+                            surface.DrawLine(x-1, y - length, x-1, y - finalgap) -- Top line
+                        end
+                        surface.DrawLine(x-1, y + length, x-1, y + finalgap) -- Bottom line
+                    elseif (GetConVar("cl_buu_crosshairstyle"):GetInt() == 4) then
+                    
+                        -- Far Cry 3 Crosshair
+                        if (self.CrosshairType < 3) then
+                        
+                            -- 4 line crosshair
+                            surface.SetTexture(surface.GetTextureID("scope/xhair_fc3"))
+                            surface.DrawTexturedRectRotated(x,y+finalgap+5, 4, 16, 0)
+                            surface.DrawTexturedRectRotated(x+finalgap+5,y, 4, 16, 90)
+                            if (self.CrosshairType != 2) then
+                                surface.DrawTexturedRectRotated(x,y-finalgap-5, 4, 16, 180)
+                            end
+                            surface.DrawTexturedRectRotated(x-finalgap-5,y, 4, 16, 270)
+                        else
+                            
+                            -- Circular crosshair
+                            local ga = mode.Cone
+                            if (IsValidVariable(self.CrosshairGap)) then
+                                ga = self.CrosshairGap
+                            end
+                            surface.DrawCircle(x, y, ga*finalgap*5-1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                            surface.DrawCircle(x, y, ga*finalgap*5+1, Color(r*0.61, g*0.61, b*0.61, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                            surface.DrawCircle(x, y, ga*finalgap*5, Color(r, g, b, GetConVar("cl_buu_crosshairalpha"):GetInt()))
+                        end
                     end
                 end
+            else
+                self.DrawCrosshair = false
             end
-        else
-            self.DrawCrosshair = false
         end
     end
 
